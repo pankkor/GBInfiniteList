@@ -6,8 +6,10 @@
 //  Copyright (c) 2013 Goonbee. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#ifndef GBInfiniteList_GBInfiniteList_h
+#define GBInfiniteList_GBInfiniteList_h
 
-@interface GBInfiniteList : NSObject
+#import "GBInfiniteListView.h"
+#import "GBInfiniteListViewController.h"
 
-@end
+#endif
