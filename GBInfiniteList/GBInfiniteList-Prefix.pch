@@ -1,0 +1,7 @@
+//
+// Prefix header for all source files of the 'GBInfiniteList' target in the 'GBInfiniteList' project
+//
+
+#ifdef __OBJC__
+    #import <Foundation/Foundation.h>
+#endif
