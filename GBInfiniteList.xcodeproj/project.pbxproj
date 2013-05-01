@@ -10,7 +10,39 @@
 		8A3465B5172FC37A00EE1621 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8A3465B4172FC37A00EE1621 /* Foundation.framework */; };
 		8A3465DE172FEE1000EE1621 /* GBInfiniteListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 8A3465DD172FEE1000EE1621 /* GBInfiniteListView.m */; };
 		8A3465E1172FEE3200EE1621 /* GBInfiniteListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 8A3465E0172FEE3200EE1621 /* GBInfiniteListViewController.m */; };
+		8AF78D8717311DB400F61ECC /* UIView+GBInfiniteList.m in Sources */ = {isa = PBXBuildFile; fileRef = 8AF78D8617311DB400F61ECC /* UIView+GBInfiniteList.m */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8A3465E9172FF11500EE1621 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8A3465E3172FF11500EE1621 /* GBToolbox.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8AD911B1162D9E2200C9D287;
+			remoteInfo = "GBToolbox-iOS";
+		};
+		8A3465EB172FF11500EE1621 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8A3465E3172FF11500EE1621 /* GBToolbox.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8A0C4E34165FA60C00A990FB;
+			remoteInfo = GBToolboxUnitTests;
+		};
+		8A3465ED172FF11500EE1621 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8A3465E3172FF11500EE1621 /* GBToolbox.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8A0377FB16BFCD2F0096C448;
+			remoteInfo = "GBToolbox-OSX";
+		};
+		8A3465F0172FF15400EE1621 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8A3465E3172FF11500EE1621 /* GBToolbox.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8AD911B0162D9E2200C9D287;
+			remoteInfo = "GBToolbox-iOS";
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		8A3465AF172FC37A00EE1621 /* CopyFiles */ = {
@@ -33,6 +65,9 @@
 		8A3465DF172FEE3200EE1621 /* GBInfiniteListViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GBInfiniteListViewController.h; sourceTree = "<group>"; };
 		8A3465E0172FEE3200EE1621 /* GBInfiniteListViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GBInfiniteListViewController.m; sourceTree = "<group>"; };
 		8A3465E2172FEE4400EE1621 /* GBInfiniteList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GBInfiniteList.h; sourceTree = "<group>"; };
+		8A3465E3172FF11500EE1621 /* GBToolbox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GBToolbox.xcodeproj; path = ../GBToolbox/GBToolbox.xcodeproj; sourceTree = "<group>"; };
+		8AF78D8517311DB400F61ECC /* UIView+GBInfiniteList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+GBInfiniteList.h"; sourceTree = "<group>"; };
+		8AF78D8617311DB400F61ECC /* UIView+GBInfiniteList.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+GBInfiniteList.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,6 +85,7 @@
 		8A3465A8172FC37A00EE1621 = {
 			isa = PBXGroup;
 			children = (
+				8A3465EF172FF11900EE1621 /* Libraries */,
 				8A3465B6172FC37A00EE1621 /* GBInfiniteList */,
 				8A3465B3172FC37A00EE1621 /* Frameworks */,
 				8A3465B2172FC37A00EE1621 /* Products */,
@@ -78,6 +114,8 @@
 				8A3465E2172FEE4400EE1621 /* GBInfiniteList.h */,
 				8A3465DC172FEE1000EE1621 /* GBInfiniteListView.h */,
 				8A3465DD172FEE1000EE1621 /* GBInfiniteListView.m */,
+				8AF78D8517311DB400F61ECC /* UIView+GBInfiniteList.h */,
+				8AF78D8617311DB400F61ECC /* UIView+GBInfiniteList.m */,
 				8A3465DF172FEE3200EE1621 /* GBInfiniteListViewController.h */,
 				8A3465E0172FEE3200EE1621 /* GBInfiniteListViewController.m */,
 				8A3465B7172FC37A00EE1621 /* Supporting Files */,
@@ -91,6 +129,24 @@
 				8A3465B8172FC37A00EE1621 /* GBInfiniteList-Prefix.pch */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		8A3465E4172FF11500EE1621 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8A3465EA172FF11500EE1621 /* libGBToolbox.a */,
+				8A3465EC172FF11500EE1621 /* GBToolboxUnitTests.octest */,
+				8A3465EE172FF11500EE1621 /* GBToolbox.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8A3465EF172FF11900EE1621 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				8A3465E3172FF11500EE1621 /* GBToolbox.xcodeproj */,
+			);
+			name = Libraries;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -107,6 +163,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				8A3465F1172FF15400EE1621 /* PBXTargetDependency */,
 			);
 			name = GBInfiniteList;
 			productName = GBInfiniteList;
@@ -132,12 +189,42 @@
 			mainGroup = 8A3465A8172FC37A00EE1621;
 			productRefGroup = 8A3465B2172FC37A00EE1621 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 8A3465E4172FF11500EE1621 /* Products */;
+					ProjectRef = 8A3465E3172FF11500EE1621 /* GBToolbox.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				8A3465B0172FC37A00EE1621 /* GBInfiniteList */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		8A3465EA172FF11500EE1621 /* libGBToolbox.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libGBToolbox.a;
+			remoteRef = 8A3465E9172FF11500EE1621 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		8A3465EC172FF11500EE1621 /* GBToolboxUnitTests.octest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = GBToolboxUnitTests.octest;
+			remoteRef = 8A3465EB172FF11500EE1621 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		8A3465EE172FF11500EE1621 /* GBToolbox.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = GBToolbox.framework;
+			remoteRef = 8A3465ED172FF11500EE1621 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXSourcesBuildPhase section */
 		8A3465AD172FC37A00EE1621 /* Sources */ = {
@@ -146,10 +233,19 @@
 			files = (
 				8A3465DE172FEE1000EE1621 /* GBInfiniteListView.m in Sources */,
 				8A3465E1172FEE3200EE1621 /* GBInfiniteListViewController.m in Sources */,
+				8AF78D8717311DB400F61ECC /* UIView+GBInfiniteList.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8A3465F1172FF15400EE1621 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "GBToolbox-iOS";
+			targetProxy = 8A3465F0172FF15400EE1621 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		8A3465BD172FC37A00EE1621 /* Debug */ = {
@@ -176,6 +272,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "../**";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -199,6 +296,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "../**";
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
