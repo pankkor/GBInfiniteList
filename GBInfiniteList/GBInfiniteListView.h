@@ -11,30 +11,30 @@
 extern NSString * const GBTypeMismatchException;
 extern NSString * const GBWidthMismatchException;
 extern NSString * const GBSizeMismatchException;
+extern NSString * const GBUnexpectedMessageException;
 
-@protocol GBInfiniteListDataSource;
-@protocol GBInfiniteListDelegate;
+@protocol GBInfiniteListViewDataSource;
+@protocol GBInfiniteListViewDelegate;
 
 @interface GBInfiniteListView : UIView <UIScrollViewDelegate>
 
 //Set delegate before setting dataSource
-@property (weak, nonatomic) id<GBInfiniteListDataSource>        dataSource;
-@property (weak, nonatomic) id<GBInfiniteListDelegate>          delegate;
+@property (weak, nonatomic) id<GBInfiniteListViewDataSource>        dataSource;
+@property (weak, nonatomic) id<GBInfiniteListViewDelegate>          delegate;
 
 //Returns 0 if the Geometry dataSource methods haven't been called yet
 @property (assign, nonatomic, readonly) CGFloat                 requiredViewWidth;
 
 #pragma mark - Designated initialiser
 
-//Designated initialiser. If the frame changes, the actual list(which is a subview of this object) is just centered. You have to call reset and supply new paddings, column count, etc. to change the geometric properties of the list.
+//Designated initialiser. If the frame changes, the actual list(which is a subview of this object) is just centered. You have to call reset to be given the chance to supply new paddings, column count, etc.
 -(id)initWithFrame:(CGRect)frame;
-
-//foo maybe add initwithcoder for use with IB
+-(id)initWithCoder:(NSCoder *)aDecoder;
 
 #pragma mark - Data dance
 
-//Asks for the views of the visible items again of the dataSource
--(void)reloadVisibleItems;
+////Asks for the views of the visible items again of the dataSource
+//-(void)reloadVisibleItems;
 
 //reset (removes everything, cleans up memory and scrolls to top with no animation)
 -(void)reset;
@@ -57,11 +57,12 @@ extern NSString * const GBSizeMismatchException;
 -(BOOL)isItemOnScreen:(NSUInteger)itemIdentifier;
 
 //Lets you get an array of all the currently displayed items.
--(NSArray *)itemsCurrentlyOnScreen;
+-(NSDictionary *)itemsCurrentlyOnScreen;
 
 @end
 
-@protocol GBInfiniteListDataSource <NSObject>
+
+@protocol GBInfiniteListViewDataSource <NSObject>
 
 #pragma mark - Geometry
 //These are called after init, or after reset... only once. It's recommended you stick to integral values.
@@ -132,27 +133,25 @@ extern NSString * const GBSizeMismatchException;
 
 @end
 
-@protocol GBInfiniteListDelegate <NSObject>
+
+@protocol GBInfiniteListViewDelegate <NSObject>
 
 @optional
 
 //Sent when the user taps on a particular view... unless the view handles the touches itself
--(void)infiniteListView:(GBInfiniteListView *)infiniteListView didTapOnView:(UIView *)view correspondingToItem:(NSUInteger)itemIdentifier;
+-(void)infiniteListView:(GBInfiniteListView *)infiniteListView didTapOnView:(UIView *)view correspondingToItem:(NSUInteger)itemIdentifier;//TODO: do
 
-//Sent when the list has scrolled to the bottom. By scrolled I mean: dragged, decellerated, or stopped--i.e. as soon as the view passes that point.
--(void)infiniteListViewScrolledPastBottom:(GBInfiniteListView *)infiniteListView;
+//Sent when it scrolls. Measured as total offset of scrollable region (including header view, not including loading view)
+-(void)infiniteListView:(GBInfiniteListView *)infiniteListView didScrollToPosition:(CGFloat)offset;
 
-//Sent when it scrolls. Same semantics as above. Measured as total offset of scrollable region (including header view, not including loading view)
--(void)infiniteListView:(GBInfiniteListView *)infiniteListView scrolledToPosition:(CGFloat)offset;
+//Sent when the list of visible on screen items changes. (Only when it changes, so this doesn't get sent for every scroll, if you want that use infiniteListView:scrolledToPosition: and inside it call the itemsCurrentlyOnScreen method)
+-(void)infiniteListView:(GBInfiniteListView *)infiniteListView listOfVisibleItemsChanged:(NSArray *)itemIdentifiers;
 
-////Sent when the list of visible on screen items changes. (Only when it changes, so this doesn't get sent for every scroll, if you want that use infiniteListView:scrolledToPosition: and inside it call the itemsCurrentlyOnScreen method)
-//-(void)infiniteListView:(GBInfiniteListView *)infiniteListView listOfVisibleItemsChanged:(NSArray *)itemIdentifiers;
+//When an item leaves the screen, this is called
+-(void)infiniteListView:(GBInfiniteListView *)infiniteListView view:(UIView *)view correspondingToItemDidGoOffScreen:(NSUInteger)itemIdentifier;
 
-////When an item leaves the screen, this is called
-//-(void)infiniteListView:(GBInfiniteListView *)infiniteListView view:(UIView *)view correspondingToItemWentOffScreen:(NSUInteger)itemIdentifier;
-//
-////When an item is scrolled onto screen
-//-(void)infiniteListView:(GBInfiniteListView *)infiniteListView view:(UIView *)view correspondingToItemCameOnScreen:(NSUInteger)itemIdentifier;
+//When an item is scrolled onto screen
+-(void)infiniteListView:(GBInfiniteListView *)infiniteListView view:(UIView *)view correspondingToItemDidComeOnScreen:(NSUInteger)itemIdentifier;
 
 //Started loading. Lets you connect UI stuff to this. You shouldn't use this for the data dance, the dataSource has his own delegate methods for this. This is just for UI related stuff, i.e. if you want to show an auxiliarry loading indicator
 -(void)infiniteListViewDidStartLoadingMoreItems:(GBInfiniteListView *)infiniteListView;
