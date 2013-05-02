@@ -11,18 +11,19 @@
 #import "UIView+GBInfiniteList.h"
 #import "GBToolbox.h"
 
-//internals
-    //has pools of reusable views which can be changed completely except for width
-    //has an array of view sizes so it knows which view to draw when, especially when scrolling up
+typedef struct {
+    CGFloat y;
+    CGFloat height;
+} GBInfiniteListItemPosition;
 
 typedef struct {
-    NSUInteger  itemIdentifier;
-    CGRect      frame;
+    NSUInteger                      itemIdentifier;
+    GBInfiniteListItemPosition      position;
 } GBInfiniteListItemMeta;
 
 typedef struct {
-    NSUInteger  firstVisibleIndex;
-    NSUInteger  lastVisibleIndex;
+    NSUInteger firstVisibleIndex;
+    NSUInteger lastVisibleIndex;
 } GBInfiniteListColumnBoundaries;
 
 GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesZero = {0, 0};
@@ -55,7 +56,7 @@ GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesZero = {0, 0}
 @property (assign, nonatomic) CGFloat                               horizontalColumnMargin;
 
 //Container for items that are about to be recycled
-@property (strong, nonatomic) NSMutableArray                        *unrecycledViews;
+@property (strong, nonatomic) NSMutableArray                        *trashedViews;
 
 //Container for items that can be recycled
 @property (strong, nonatomic) NSMutableArray                        *recyclableViews;
@@ -134,7 +135,7 @@ GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesZero = {0, 0}
     
     self.scrollView = nil;
     
-    self.unrecycledViews = nil;
+    self.trashedViews = nil;
     self.recyclableViews = nil;
     self.columnStacks = nil;
     self.loadedViews = nil;
@@ -205,7 +206,7 @@ GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesZero = {0, 0}
     self.scrollView.backgroundColor = [UIColor clearColor];
     self.scrollView.delegate = self;
     
-    self.unrecycledViews = [NSMutableArray new];
+    self.trashedViews = [NSMutableArray new];
     self.recyclableViews = [NSMutableArray new];
     self.loadedViews = [NSMutableDictionary new];
     
@@ -288,7 +289,6 @@ GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesZero = {0, 0}
     //ask for header... this shud be encapsualted so i just get a view that's ready for display and the frame configured ...... old sentence: padding/margins configured (however i may be doing that, modifying frame, or subviewing)
     
     
-    
     //kick it all off
     //TODO: do
 }
@@ -297,6 +297,36 @@ GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesZero = {0, 0}
     [self _initialiseDataStructuresAndZeroState];
     
     //note: asking for new items, etc. have their own checks and they stop autonomously as soon as they realise that self.isDataDanceActive is turned off
+}
+
+#pragma mark - Private API: Data dance
+
+-(void)_iterate {
+    [self _offScreenLoop];
+    [self _recyclerLoop];
+    [self _drawAndLoadLoop];
+    [self _onScreenLoop];
+    [self _emptyCheck];
+}
+
+-(void)_offScreenLoop {
+    
+}
+
+-(void)_recyclerLoop {
+    
+}
+
+-(void)_drawAndLoadLoop {
+    
+}
+
+-(void)_onScreenLoop {
+    
+}
+
+-(void)_emptyCheck {
+    
 }
 
 @end
@@ -326,7 +356,9 @@ GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesZero = {0, 0}
     //empty check
 
 //reset:
-    //call offscreen handler on all visible items
+    //take all loaded items
+        //put them in the trash
+        //send the delegate an infiniteListView:view:correspondingToItemWentOffScreen: message
     //recycler loop
     //scroll to top without animating
     //init data structures and zero state
@@ -342,26 +374,25 @@ GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesZero = {0, 0}
 
 //offscreen loop:
     //find and enumerate all items which have gone off screen
-        //put them in unrecycled list so they can be recycled
+        //put them in trash list so they can be recycled
         //call offscreen handler with them
-    //update column boundaries or visibles... not sure
 
 //onscreen loop:
     //find and enumerate all the items which have come on screen (can use a temporary place to store these instead of having to search for them)
         //call onscreen handler with the item
-    //update column boundaries or visibles... not sure
 
 //offscreen handler:
-    //add them to the recyclebale stack
+    //update column loaded boundaries by taking item out
+    //add item to the recyclebale stack
     //send the delegate an infiniteListView:view:correspondingToItemWentOffScreen: message
 
 //onscreen handler:
     //send the delegate an infiniteListView:view:correspondingToItemCameOnScreen: message
 
 //recycler loop:
-    //iterate over all items that are in the unrecycled stack
+    //iterate over all items that are in the trash
         //take them out of the loaded items list
-        //tale them out of the unrecycled list
+        //tale them out of the trash list
         //put them in the recycleable stack
         //send the delegate an infiniteListView:didRecycleView:lastUsedByItem: message
 
@@ -371,9 +402,9 @@ GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesZero = {0, 0}
     //is anything shown? NO
         //show empty view...
 
-//drawing loop: a loop that tries to fill the screen by asking for more data, or if there isnt any more available: starting the dataload protocol in hopes of getting called again when more is available
+//draw+load loop: a loop that tries to fill the screen by asking for more data, or if there isnt any more available: starting the dataload protocol in hopes of getting called again when more is available
     //is dataDanceActive? YES
-        //check if there is a gap? Bottom
+        //check if there is a gap (take into account loadingTriggerDistance)? Bottom
             //ask if there is another item currently available? YES
                 //ask for the item
                     //check that item is a UIView? YES
@@ -386,19 +417,22 @@ GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesZero = {0, 0}
                         //raise bad type exception
 
             //ask if there is another item currently available? NO
-                //ask if it can load more items? YES
-                    //remember that you're expecting to receive the moreItemsAvailable: message
-                    //send datasource the startLoadingMoreItemsInInfiniteListView: message
-                    //send delegate the infiniteListViewDidStartLoadingMoreItems: message
-                    //ask if it should show a loading view? YES
-                        //ask for the loading view? UIView*
-                            //ask for loading view margin stuff...
-                            //assign that UIView* as the loadingView
-                        //ask for the loading view? nil
-                            //assign a default simple spinner as the loadingView
-                        //show loading view
-                //ask if it can load more items? NO
-                    //send infiniteListViewNoMoreItemsAvailable: to delegate
+                //check to see if it has already requested mroe items? NO
+                    //ask if it can load more items? YES
+                        //remember that you're expecting to receive the moreItemsAvailable: message
+                        //send datasource the startLoadingMoreItemsInInfiniteListView: message
+                        //send delegate the infiniteListViewDidStartLoadingMoreItems: message
+                        //ask if it should show a loading view? YES
+                            //ask for the loading view? UIView*
+                                //ask for loading view margin stuff...
+                                //assign that UIView* as the loadingView
+                            //ask for the loading view? nil
+                                //assign a default simple spinner as the loadingView
+                            //show loading view
+                    //ask if it can load more items? NO
+                        //send infiniteListViewNoMoreItemsAvailable: to delegate
+                        //we're done
+                //check to see if it has already requested more items? NO
                     //we're done
         //check if there is a gap? TOP
             //ask for the item

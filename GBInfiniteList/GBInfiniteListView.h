@@ -94,6 +94,9 @@
 //Lets you know that you should start loading more items. When you are done loading, call the didFinishLoadingMoreItems method on the infiniteListView. Don't load synchronously inside this method, or you'll block the UI!
 -(void)startLoadingMoreItemsInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 
+//Lets you set the distance past the lower bounds of the viewport for which to load more items. This is so you can get a seamless scrolling experience. If you set this to 0 then the list has to first scroll past all the loaded items before it will request to load more, which means you have to stop and start. Defaults to 20. Measured in points, vertically, from the lower edge of the viewport to the end of the shortest column.
+-(CGFloat)triggerDistanceInInfiniteListView:(GBInfiniteListView *)infiniteListView;
+
 @optional
 
 //Lets you know that a particular view was recycled and it's not showing the previous item any more... in case you were loading stuff async and just put a placeholder image for a particular item. After this point you should release the pointer you had to the view which you were hoping to update once your async load finished. It's a good idea to cache the result once your load finished in case the user scrolls back up, but don't update the view until asked to do so!
