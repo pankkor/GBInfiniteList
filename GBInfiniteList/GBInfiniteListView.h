@@ -8,6 +8,10 @@
 
 #import <UIKit/UIKit.h>
 
+extern NSString * const GBTypeMismatchException;
+extern NSString * const GBWidthMismatchException;
+extern NSString * const GBSizeMismatchException;
+
 @protocol GBInfiniteListDataSource;
 @protocol GBInfiniteListDelegate;
 
@@ -69,6 +73,9 @@
 
 @optional
 
+//Lets you set the distance past the lower bounds of the viewport for which to load more items. This is so you can get a seamless scrolling experience. If you set this to 0 then the list has to first scroll past all the loaded items before it will request to load more, which means you have to stop and start. Defaults to 20. Measured in points, vertically, from the lower edge of the viewport to the end of the shortest column.
+-(CGFloat)loadTriggerDistanceInInfiniteListView:(GBInfiniteListView *)infiniteListView;
+
 //The outermost padding of the list. This encapsulates the header, loading and noItems views as well (by default). This one is called first of all the geometry methods. Defaults to 0 for all edges
 -(UIEdgeInsets)outerPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 
@@ -94,9 +101,6 @@
 //Lets you know that you should start loading more items. When you are done loading, call the didFinishLoadingMoreItems method on the infiniteListView. Don't load synchronously inside this method, or you'll block the UI!
 -(void)startLoadingMoreItemsInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 
-//Lets you set the distance past the lower bounds of the viewport for which to load more items. This is so you can get a seamless scrolling experience. If you set this to 0 then the list has to first scroll past all the loaded items before it will request to load more, which means you have to stop and start. Defaults to 20. Measured in points, vertically, from the lower edge of the viewport to the end of the shortest column.
--(CGFloat)triggerDistanceInInfiniteListView:(GBInfiniteListView *)infiniteListView;
-
 @optional
 
 //Lets you know that a particular view was recycled and it's not showing the previous item any more... in case you were loading stuff async and just put a placeholder image for a particular item. After this point you should release the pointer you had to the view which you were hoping to update once your async load finished. It's a good idea to cache the result once your load finished in case the user scrolls back up, but don't update the view until asked to do so!
@@ -109,23 +113,21 @@
 
 //Lets you add a header view, e.g. a search field at the top
 -(UIView *)headerViewInInfiniteListView:(GBInfiniteListView *)infiniteListView;
-//You can choose whether it should take into account top, left and right outer-padding or not. Default is YES
--(BOOL)shouldRespectPaddingForHeaderViewInInfiniteListView:(GBInfiniteListView *)infiniteListView;
-//Lets you choose a margin for between the headerView and actual list. Is 0 by default on all sides. Collapses with verticalItemMargin
+//You can choose whether the header is inside the padding of the list (top, left and right) in which case the items stick immediately to it (that's what the margin is for if you want to space them). Or if you position it outside, the view stretches end-end on left and right and sticks to the top of the view, and then you have the outerpadding of the list items themselves, and then the items. Width is always resized to match, height is never resized. Default is YES, which is inside the list.
+-(BOOL)shouldPositionHeaderViewInsideOuterPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView;
+//Lets you choose a margin for between the headerView and actual list. Is 0 by default on all sides. Collapses with verticalItemMargin, but NOT with outerPadding.top
 -(CGFloat)marginForHeaderViewInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 
 //Lets you show a view when there are no items to show. e.g. if you apply a search filter and there's no results, or if your service sucks and there's nothing to show
 -(UIView *)noItemsViewInInfiniteListView:(GBInfiniteListView *)infiniteListView;
-//You can choose whether it should take into account top, left and right outer-padding or not. Default is YES
--(BOOL)shouldRespectPaddingForNoItemsViewInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 
 //return YES if you want a loading indicator. Defaults to YES.
 -(BOOL)shouldShowLoadingIndicatorInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 //Lets you specify a custom loading view, if you return nil or don't implement, a standard spinner is used.
 -(UIView *)loadingViewInInfiniteListView:(GBInfiniteListView *)infiniteListView;
-//You can choose whether it should take into account bottom, left and right outer-padding or not. Default is YES
--(BOOL)shouldRespectPaddingForLoadingViewInInfiniteListView:(GBInfiniteListView *)infiniteListView;
-//Lets you choose a margin for between the loadingView and the list. It's 0 by default on all sides. Collapses with verticalItemMargin
+//You can choose whether it should be inside or outside of the padding. See shouldPositionInsideOuterPaddingInInfiniteListView: above. Default is YES, which is inside.
+-(BOOL)shouldPositionLoadingViewInsideOuterPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView;
+//Lets you choose a margin for between the loadingView and the list. It's 0 by default on all sides. Collapses with verticalItemMargin, but NOT with outerPadding.bottom
 -(CGFloat)marginForLoadingViewInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 
 @end
@@ -143,14 +145,14 @@
 //Sent when it scrolls. Same semantics as above. Measured as total offset of scrollable region (including header view, not including loading view)
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView scrolledToPosition:(CGFloat)offset;
 
-//Sent when the list of visible on screen items changes. (Only when it changes, so this doesn't get sent for every scroll, if you want that use infiniteListView:scrolledToPosition: and inside it call the itemsCurrentlyOnScreen method)
--(void)infiniteListView:(GBInfiniteListView *)infiniteListView listOfVisibleItemsChanged:(NSArray *)itemIdentifiers;
+////Sent when the list of visible on screen items changes. (Only when it changes, so this doesn't get sent for every scroll, if you want that use infiniteListView:scrolledToPosition: and inside it call the itemsCurrentlyOnScreen method)
+//-(void)infiniteListView:(GBInfiniteListView *)infiniteListView listOfVisibleItemsChanged:(NSArray *)itemIdentifiers;
 
-//When an item leaves the screen, this is called
--(void)infiniteListView:(GBInfiniteListView *)infiniteListView view:(UIView *)view correspondingToItemWentOffScreen:(NSUInteger)itemIdentifier;
-
-//When an item is scrolled onto screen
--(void)infiniteListView:(GBInfiniteListView *)infiniteListView view:(UIView *)view correspondingToItemCameOnScreen:(NSUInteger)itemIdentifier;
+////When an item leaves the screen, this is called
+//-(void)infiniteListView:(GBInfiniteListView *)infiniteListView view:(UIView *)view correspondingToItemWentOffScreen:(NSUInteger)itemIdentifier;
+//
+////When an item is scrolled onto screen
+//-(void)infiniteListView:(GBInfiniteListView *)infiniteListView view:(UIView *)view correspondingToItemCameOnScreen:(NSUInteger)itemIdentifier;
 
 //Started loading. Lets you connect UI stuff to this. You shouldn't use this for the data dance, the dataSource has his own delegate methods for this. This is just for UI related stuff, i.e. if you want to show an auxiliarry loading indicator
 -(void)infiniteListViewDidStartLoadingMoreItems:(GBInfiniteListView *)infiniteListView;
