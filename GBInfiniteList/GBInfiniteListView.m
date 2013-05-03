@@ -64,7 +64,7 @@ static CGFloat const kDefaultLoadingViewTopMargin =                             
 static CGFloat const kDefaultHeaderViewBottomMargin =                                   0;
 static UIEdgeInsets const kPaddingForDefaultSpinner =                                   (UIEdgeInsets){4, 0, 4, 0};
 
-static CGFloat const GBColumnIndexUndefined =                                           NSUIntegerMax;
+static NSUInteger const GBColumnIndexUndefined =                                        NSUIntegerMax;
 static GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesUndefined =   {GBColumnIndexUndefined, GBColumnIndexUndefined};
 static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColumnBoundaries columnBoundaries) {
     if (columnBoundaries.firstLoadedIndex == GBColumnIndexUndefined && columnBoundaries.lastLoadedIndex == GBColumnIndexUndefined) {
@@ -126,7 +126,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 @property (strong, nonatomic) NSMutableDictionary                   *loadedViews;
 
 //For keeping track of which item is the last one loaded
-@property (assign, nonatomic) NSUInteger                            lastLoadedItemIdentifier;
+@property (assign, nonatomic) NSInteger                             lastLoadedItemIdentifier;
 
 @end
 
@@ -160,6 +160,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
         //configure the spinner
         spinner.frame = CGRectMake(kPaddingForDefaultSpinner.left, kPaddingForDefaultSpinner.top, spinner.frame.size.width, spinner.frame.size.height);
         spinner.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+        [spinner startAnimating];
         
         //add the spinner to the container view
         [_defaultLoadingView addSubview:spinner];
@@ -233,7 +234,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 //}
 
 -(void)reset {
-    l(@"_reset");
+//    l(@"_reset");
     //recycle all loaded items
     [self _recyclerLoopWithForcedRecyclingOfEverything:YES];
     
@@ -261,7 +262,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
         }
         
         //restart our loop
-        [self _iterateWithRecyclerEnabled:YES];
+        [self _iterateWithRecyclerEnabled:NO];//foo was yes before
     }
     //check that it was expecting this message? NO
     else {
@@ -294,14 +295,14 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Scrolling & Co.
 
 -(void)scrollToTopAnimated:(BOOL)shouldAnimate {
-    l(@"scrolltotop");
+//    l(@"scrolltotop");
     [self scrollToPosition:0 animated:shouldAnimate];
     
     [self _notifyDelegateAboutScrolling];    //foo dont call this if the UIScrolLView delegate gets sent a messag when this is done... dont wanna double call
 }
 
 -(void)scrollToPosition:(CGFloat)yPosition animated:(BOOL)shouldAnimate {
-    l(@"scrolltoposition");
+//    l(@"scrolltoposition");
     [self.scrollView setContentOffset:CGPointMake(0, yPosition) animated:shouldAnimate];
     
     [self _notifyDelegateAboutScrolling];    //foo dont call this if the UIScrolLView delegate gets sent a messag when this is done... dont wanna double call
@@ -327,21 +328,21 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - UIScrollViewDelegate
 
 -(void)scrollViewDidScroll:(UIScrollView *)scrollView {
-    l(@"scrollview did scroll");
+//    l(@"scrollview did scroll");
     [self _iterateWithRecyclerEnabled:NO];
     
     [self _notifyDelegateAboutScrolling];
 }
 
 -(void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
-    l(@"scrollview did end deceleratin");
+//    l(@"scrollview did end deceleratin");
     [self _iterateWithRecyclerEnabled:YES];
     
     [self _notifyDelegateAboutScrolling];
 }
 
 -(void)_notifyDelegateAboutScrolling {
-    l(@"notify about scrolling");
+//    l(@"notify delegate about scrolling");
     //tell delegate about scrolling
     if ([self.delegate respondsToSelector:@selector(infiniteListView:didScrollToPosition:)]) {
         [self.delegate infiniteListView:self didScrollToPosition:self.scrollView.contentOffset.y];
@@ -351,8 +352,8 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Private API: Memory
 
 -(void)_initialisationRoutine {
-    l(@"initroutine");
-    self.backgroundColor = [UIColor whiteColor];//foo test
+//    l(@"initroutine");
+    self.backgroundColor = [UIColor grayColor];//foo test
     
     //Create the necessary data structures etc.
     [self _initialiseDataStructures];
@@ -362,7 +363,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_initialiseDataStructures {
-    l(@"_initialiseDataStructures");
+//    l(@"_initialiseDataStructures");
     //init data structures n co.
     self.scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
     self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
@@ -380,7 +381,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     
     //reset the geometry stuff
     self.actualListOrigin = 0;
-    self.lastLoadedItemIdentifier = 0;
+    self.lastLoadedItemIdentifier = -1;
     self.numberOfColumns = 0;
     self.requiredViewWidth = 0;
     self.outerPadding = UIEdgeInsetsZero;
@@ -390,13 +391,13 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_finaliseScrollViewSize {
-    l(@"_finaliseScrollViewSize to size:");
+//    l(@"_finaliseScrollViewSize to size:");
     self.scrollView.frame = self.bounds;
     _lRect(self.scrollView.frame);
 }
 
 -(void)_initialiseColumnCountDependentDataStructures {
-    l(@"_initialiseColumnCountDependentDataStructures");
+//    l(@"_initialiseColumnCountDependentDataStructures");
     NSMutableArray *newColumnStacks = [[NSMutableArray alloc] initWithCapacity:self.numberOfColumns];
     self.columnStacksLoadedItemBoundaryIndices = malloc(sizeof(GBInfiniteListColumnBoundaries) * self.numberOfColumns);
     
@@ -410,7 +411,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_cleanup {
-    l(@"_cleanup");
+//    l(@"_cleanup");
     //my data structures
     self.columnStacks = nil;
     if (self.columnStacksLoadedItemBoundaryIndices != NULL) {
@@ -436,7 +437,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Private API: Data dance state management
 
 -(void)_manageDataDanceState {
-    l(@"_manageDataDanceState");
+//    l(@"_manageDataDanceState");
     BOOL allRequiredToStart = (self.isVisible && self.isDataSourceSet && self.isInitialised);
     BOOL anyRequireToStop = (!self.isDataSourceSet || !self.isInitialised);
     
@@ -452,7 +453,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_startDataDance {
-    l(@"_startDataDance");
+//    l(@"_startDataDance");
     //just remember it
     self.isDataDanceActive = YES;
 
@@ -473,7 +474,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_stopDataDance {
-    l(@"_stopDataDance");
+//    l(@"_stopDataDance");
     //remember state
     self.isDataDanceActive = NO;
 
@@ -484,7 +485,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Private API: Little views (header, no items, loading)
 
 -(void)_handleHeaderViewAndConfigureListOrigin {
-    l(@"_handleHeaderViewAndConfigureListOrigin");
+//    l(@"_handleHeaderViewAndConfigureListOrigin");
     UIView *headerView;
     BOOL isHeaderViewInsidePadding;
     CGFloat marginForHeader;
@@ -560,7 +561,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_handleNoItemsView {
-    l(@"_handleNoItemsView");
+//    l(@"_handleNoItemsView");
     //check if all columns have undefined indices
     BOOL isEmpty = YES;
     for (int columnIndex=0; columnIndex<self.numberOfColumns; columnIndex++) {
@@ -619,7 +620,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_drawLoadingView {
-    l(@"_drawLoadingView");
+//    l(@"_drawLoadingView");
     //ask if it should show a loading view? YES
     if ([self.dataSource respondsToSelector:@selector(shouldShowLoadingIndicatorInInfiniteListView:)] &&
         [self.dataSource shouldShowLoadingIndicatorInInfiniteListView:self]) {
@@ -675,7 +676,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_drawLoadingView:(UIView *)loadingView withType:(GBLoadingViewType)type paddingPreference:(BOOL)isLoadingViewInsideOuterPadding margin:(CGFloat)loadingViewBottomMargin {
-    l(@"_drawLoadingView... the one that does the drawing");
+//    l(@"_drawLoadingView... the one that does the drawing");
     //remove and release any potential previous loading views
     if (self.loadingView) {
         [self.loadingView removeFromSuperview];
@@ -697,12 +698,18 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     //find the longest column
     GBFastArray *columnStack;
     GBInfiniteListColumnBoundaries columnBoundaries;
-    NSUInteger runningLongestColumnLength = 0;
-    NSUInteger currentColumnHeight;
+    CGFloat runningLongestColumnLength = 0;
+    CGFloat currentColumnHeight;
     GBInfiniteListItemMeta lastItemInColumn;
     for (int columnIndex=0; columnIndex<self.numberOfColumns; columnIndex++) {
         columnStack = self.columnStacks[columnIndex];
         columnBoundaries = self.columnStacksLoadedItemBoundaryIndices[columnIndex];
+        
+        //if the index is undefined, continue
+        if (columnBoundaries.lastLoadedIndex == GBColumnIndexUndefined) {
+            continue;
+        }
+        
         lastItemInColumn = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:columnBoundaries.lastLoadedIndex];
         
         currentColumnHeight = lastItemInColumn.geometry.origin + lastItemInColumn.geometry.height;
@@ -711,7 +718,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
             runningLongestColumnLength = currentColumnHeight;
         }
     }
-    CGFloat furthestItemLastPoint = currentColumnHeight;
+    CGFloat furthestItemLastPoint = runningLongestColumnLength;
     
     //height stays the same
     newLoadingViewFrame.size.height = self.loadingView.frame.size.height;
@@ -746,7 +753,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Private API: Geometry stuff
 
 -(void)_requestAndPrepareGeometryStuff {
-    l(@"_requestAndPrepareGeometryStuff");
+//    l(@"_requestAndPrepareGeometryStuff");
     //required
     self.numberOfColumns = [self.dataSource numberOfColumnsInInfiniteListView:self];
     
@@ -789,47 +796,83 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Private API: Data dance
 
 -(void)_iterateWithRecyclerEnabled:(BOOL)shouldRecycle {
-    l(@"_iterateWithRecyclerEnabled");
+//    shouldRecycle = NO;//foo shunt
+    l(@"\n\n");
+    l(@"_iterateWithRecyclerEnabled: %@", _b(shouldRecycle));
     if (self.isDataDanceActive) {
         if (shouldRecycle) [self _recyclerLoopWithForcedRecyclingOfEverything:NO];
         [self _drawAndLoadLoop];
         [self _handleNoItemsView];
     }
+    l(@"\n\n");
 }
 
 -(void)_recyclerLoopWithForcedRecyclingOfEverything:(BOOL)forceRecycleAll {
-    l(@"_recyclerLoopWithForcedRecyclingOfEverything");
+    l(@"_recyclerLoopWithForcedRecyclingOfEverything: %@", _b(forceRecycleAll));
+    
+    //foo add forced recycling somewhere
+    
     //loop over every column
     CGFloat loadedZoneTop = self.scrollView.contentOffset.y;
     CGFloat loadedZoneHeight = self.scrollView.bounds.size.height + self.loadTriggerDistance;
     GBFastArray *columnStack;
-    GBInfiniteListColumnBoundaries columnBoundaries;
     for (int columnIndex=0; columnIndex<self.numberOfColumns; columnIndex++) {
         columnStack = self.columnStacks[columnIndex];
-        columnBoundaries = self.columnStacksLoadedItemBoundaryIndices[columnIndex];
+        
+        //if there's nothing in the column, get out of here
+        if (IsGBInfiniteListColumnBoundariesUndefined(self.columnStacksLoadedItemBoundaryIndices[columnIndex])) {
+            l(@"nothing inside column when recycling");//foo
+            continue;
+        }
         
         //prepare for checking whether it's visible or not
         GBInfiniteListItemMeta nextItemUp;
-        NSInteger index = columnBoundaries.firstLoadedIndex;
         
-        //go down until you find the first item that's invisible
+        //search top down first
+        NSInteger index = self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex;
         while (index <= self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex) {
             nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
             
-            //check if forced recycling? YES or item is visible? NO
-            if (forceRecycleAll || !Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {
-                [self _recycleItemWithMeta:nextItemUp indexInColumn:index column:columnIndex inColumnBoundaryWithAddress:columnBoundaries];
+            //check if item is visible? NO
+            if (!Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {
+                [self _recycleItemWithMeta:nextItemUp indexInColumn:index column:columnIndex inColumnBoundaryWithAddress:self.columnStacksLoadedItemBoundaryIndices[columnIndex]];
+            }
+            //otherwise start searching from the other end
+            else {
+                break;
             }
             
             //if we didnt find one and got here... try again
             index++;
         }
+        
+        //now search bottom up
+        index = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;
+        while (index >= self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex) {
+            nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
+            
+            //check if item is visible? NO
+            if (!Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {
+                [self _recycleItemWithMeta:nextItemUp indexInColumn:index column:columnIndex inColumnBoundaryWithAddress:self.columnStacksLoadedItemBoundaryIndices[columnIndex]];
+            }
+            //otherwise start searching from the other end
+            else {
+                break;
+            }
+
+            //try again
+            index--;
+        }
     }
+}
+
+-(void)_attemptRecycleOfItem {
+    
 }
 
 //draw+load loop: a loop that tries to fill the screen by asking for more data, or if there isnt any more available: starting the dataload protocol in hopes of getting called again when more is available
 -(void)_drawAndLoadLoop {
-    l(@"_drawAndLoadLoop");
+//    l(@"_drawAndLoadLoop");
     //check if there is a gap (take into account loadingTriggerDistance)?
     GBInfiniteListGap nextGap = [self _findNextGap];
     
@@ -873,6 +916,9 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
                     //remember that you're expecting to receive the moreItemsAvailable: message
                     self.hasRequestedMoreItems = YES;
                     
+                    //draw loading view
+                    [self _drawLoadingView];
+                    
                     //send datasource the startLoadingMoreItemsInInfiniteListView: message
                     [self.dataSource startLoadingMoreItemsInInfiniteListView:self];
                     
@@ -880,9 +926,6 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
                     if ([self.delegate respondsToSelector:@selector(infiniteListViewDidStartLoadingMoreItems:)]) {
                         [self.delegate infiniteListViewDidStartLoadingMoreItems:self];
                     }
-                    
-                    //draw loading view
-                    [self _drawLoadingView];
                 }
                 //ask if it can load more items? NO
                 else {
@@ -958,10 +1001,10 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     //take them out of the loaded items list
     [self.loadedViews removeObjectForKey:key];
     
-    //if the view is the only view in the column
-    if (index == 0) {
+    //if the view was the only view in the column
+    if (columnBoundaries.firstLoadedIndex == 0 && columnBoundaries.lastLoadedIndex == 0) {
         //change the indices to indicate the column is now empty
-        self.columnStacksLoadedItemBoundaryIndices[columnIndex] = GBInfiniteListColumnBoundariesUndefined;
+        self.columnStacksLoadedItemBoundaryIndices[columnIndex] = GBInfiniteListColumnBoundariesUndefined;//foo
     }
     //if the view disappeared off the front? YES
     else if (columnBoundaries.firstLoadedIndex == index) {
@@ -974,7 +1017,8 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
         self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex -= 1;//foo test this to make sure it actually decrements
     }
     else {
-        NSAssert(false, @"Time to rethink your logic...");
+        l(@"----------------warning, i shudnt be here");
+//        NSAssert(false, @"Time to rethink your logic...");//foo donno why this happens
     }
     
     //send the delegate an infiniteListView:view:correspondingToItemDidGoOffScreen: message
@@ -996,7 +1040,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 -(void)_drawOldItemWithMeta:(GBInfiniteListItemMeta)itemMeta view:(UIView *)itemView indexInColumnStack:(NSUInteger)indexInColumnStack inColumn:(NSUInteger)columnIndex {
     l(@"_drawOldItemWithMeta");
     //update column boundary
-    self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex = indexInColumnStack;
+    self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex = indexInColumnStack;//foo
 
     //don't need to add it to columnStack because it's alread in there
     
@@ -1024,7 +1068,8 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_drawAndStoreNewItem:(NSUInteger)newItemIdentifier withView:(UIView *)itemView inColumn:(NSUInteger)columnIndex {
-    l(@"_drawAndStoreNewItem");
+//    l(@"_drawAndStoreNewItem");
+    l(@".");
     //create meta struct which gets filled in along the way
     GBInfiniteListItemMeta newItemMeta;
     newItemMeta.itemIdentifier = newItemIdentifier;
@@ -1045,9 +1090,12 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
         itemGeometry.origin = lastItem.geometry.origin + lastItem.geometry.height + self.verticalItemMargin;
     }
     
+    //fill in the geometry
+    newItemMeta.geometry = itemGeometry;
+    
     //if its the first item, set the indices to both be 0
     if (columnBoundaries.lastLoadedIndex == GBColumnIndexUndefined) {
-        self.columnStacksLoadedItemBoundaryIndices[columnIndex] = (GBInfiniteListColumnBoundaries){0,0};
+        self.columnStacksLoadedItemBoundaryIndices[columnIndex] = (GBInfiniteListColumnBoundaries){0,0};//foo
     }
     //else expand the last column boundary by 1
     else {
@@ -1085,7 +1133,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(GBInfiniteListGap)_findNextGap {
-    l(@"_findNextGap");
+//    l(@"_findNextGap");
     CGFloat loadedZoneTop = self.scrollView.contentOffset.y;
     CGFloat loadedZoneHeight = self.scrollView.bounds.size.height + self.loadTriggerDistance;
     
@@ -1142,29 +1190,41 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     //find shortest column -> check if it's onscreen -> if not return a newGap with itemID as last+1
     //this code is different because we can't skip items, and we must pick the shortest one first
     
-    //find the shortest column
+    //calculate the shortest column and that column's length
     NSUInteger runningShortestColumnIndex = 0;
-    NSUInteger runningShortestColumnLength = NSUIntegerMax;
-    NSUInteger currentColumnHeight;
-    GBInfiniteListItemMeta runningShortestItem;
+    CGFloat runningShortestColumnLength = CGFLOAT_MAX;
+    CGFloat currentColumnLength;
+//    GBInfiniteListItemMeta runningShortestItem;
     
     GBInfiniteListItemMeta lastItemInColumn;
     for (int columnIndex=0; columnIndex<self.numberOfColumns; columnIndex++) {
         columnStack = self.columnStacks[columnIndex];
         columnBoundaries = self.columnStacksLoadedItemBoundaryIndices[columnIndex];
-        lastItemInColumn = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:columnBoundaries.lastLoadedIndex];
         
-        currentColumnHeight = lastItemInColumn.geometry.origin + lastItemInColumn.geometry.height;
-        
-        if (currentColumnHeight < runningShortestColumnLength) {
+        //if the index is undefined, then this is a column that is as short as it gets. and since we search left to right, if it has multiple empty columns, it will return the leftmost one first. if this is the case, skip all the rest because it cant get shorter.
+        if (columnBoundaries.lastLoadedIndex == GBColumnIndexUndefined) {
             runningShortestColumnIndex = columnIndex;
-            runningShortestItem = lastItemInColumn;
-            runningShortestColumnLength = currentColumnHeight;
+            runningShortestColumnLength = 0;
+
+            //don't search any more
+            break;
+        }
+        //otherwise continue looking for the shortest one
+        else {
+            //we need to calculate the length of the column first
+            lastItemInColumn = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:columnBoundaries.lastLoadedIndex];
+            currentColumnLength = lastItemInColumn.geometry.origin + lastItemInColumn.geometry.height;
+            
+            //then check if its shorter or not than what we currently think is the shortest
+            if (currentColumnLength < runningShortestColumnLength) {
+                runningShortestColumnIndex = columnIndex;
+                runningShortestColumnLength = currentColumnLength;
+            }
         }
     }
     
     //check if the item leaves a gap
-    if (runningShortestItem.geometry.origin + runningShortestItem.geometry.height < loadedZoneTop + loadedZoneHeight) {
+    if (runningShortestColumnLength < loadedZoneTop + loadedZoneHeight) {
         //if it does, return this gap
         GBInfiniteListGap newBottomGap;
         

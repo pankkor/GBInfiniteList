@@ -56,7 +56,7 @@
 }
 
 -(CGFloat)loadTriggerDistanceInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return 100;//foo test different one
+    return 0;//foo test different one
 }
 
 -(UIEdgeInsets)outerPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView {
@@ -76,19 +76,40 @@
 }
 
 -(UIView *)viewForItem:(NSUInteger)itemIdentifier inInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return [self _randomView];
+    //foo update recycling API so you can give it a closure which it can use to create a new view so u always have a view, dequeueViewWithReuseIdentifier:orElseCreateWithBlock:
+    
+    //try to recycle one
+    UIView *myView;
+    if (NO) {
+        
+    }
+    else {
+        myView = [self _createNewView];
+    }
+    
+    [self _configureViewRandomly:myView];
+    
+    return myView;
 }
 
 -(BOOL)canLoadMoreItemsInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return NO;
+    NSLog(@"can laoding more?");
     return YES;//foo try no also
 }
 
 -(void)startLoadingMoreItemsInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    ExecuteAfter(3, ^{//foo try different delay
-        self.numberOfCurrentlyLoadedViews += 10;//foo try different number of loaded items
-        [self.infiniteListView didFinishLoadingMoreItems];
-    });
+    NSLog(@"start laoding");
+    
+    NSLog(@"loaded more");
+    self.numberOfCurrentlyLoadedViews += 10;//foo try different number of loaded items
+    [self.infiniteListView didFinishLoadingMoreItems];
+    
+    
+//    ExecuteAfter(0, ^{//foo try different delay
+//        NSLog(@"loaded more");
+//        self.numberOfCurrentlyLoadedViews += 10;//foo try different number of loaded items
+//        [self.infiniteListView didFinishLoadingMoreItems];
+//    });
 }
 
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView didRecycleView:(UIView *)view lastUsedByItem:(NSUInteger)itemIdentifier {
@@ -129,11 +150,15 @@
 
 #pragma mark - Testing
 
--(UIView *)_randomView {
-    UIView *newView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.infiniteListView.requiredViewWidth, [self _randomIntegerFrom:20 to:60])];
-    newView.backgroundColor = [self _randomColor];
+-(UIView *)_createNewView {
+    return [[UIView alloc] init];
+}
+
+-(UIView *)_configureViewRandomly:(UIView *)view {
+    view.frame = CGRectMake(0, 0, self.infiniteListView.requiredViewWidth, [self _randomIntegerFrom:60 to:160]);
+    view.backgroundColor = [self _randomColor];
     
-    return newView;
+    return view;
 }
 
 //foo add to GBToolbox
