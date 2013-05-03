@@ -35,6 +35,14 @@ typedef struct {
     [self.infiniteListView reset];
 }
 
+//foo testing
+-(void)scrollUp {
+    [self.infiniteListView scrollToPosition:0 animated:NO];
+}
+-(void)scrollDown {
+    [self.infiniteListView scrollToPosition:10000 animated:NO];
+}
+
 #pragma mark - Memory
 
 
@@ -58,11 +66,11 @@ typedef struct {
 #pragma mark - GBInfiniteListViewDataSource
 
 -(NSUInteger)numberOfColumnsInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return 2;//foo test different one
+    return 3;//foo test different one
 }
 
 -(CGFloat)loadTriggerDistanceInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return 0;//foo test different one
+    return 100;//foo test different one
 }
 
 -(UIEdgeInsets)outerPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView {
@@ -84,7 +92,7 @@ typedef struct {
 -(UIView *)viewForItem:(NSUInteger)itemIdentifier inInfiniteListView:(GBInfiniteListView *)infiniteListView {
     //foo update recycling API so you can give it a closure which it can use to create a new view so u always have a view, dequeueViewWithReuseIdentifier:orElseCreateWithBlock:
     
-    NSLog(@"ident: %d", itemIdentifier);
+//    NSLog(@"ident: %d", itemIdentifier);
     
     //get a view object...
     MyView *myView;
@@ -104,6 +112,8 @@ typedef struct {
     [myView setHue:myItem.hue];
     [myView setText:[NSString stringWithFormat:@"#%d", myItem.identifier]];
     
+//    l(@".");
+    
     return myView;
 }
 
@@ -113,12 +123,12 @@ typedef struct {
 }
 
 -(void)startLoadingMoreItemsInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    NSLog(@"start loading more from server");
+//    NSLog(@"start loading more from server");
     
 //    NSLog(@"loaded more");
     
     //pretend to download some stuff off a server and store it locally
-    for (int i=0; i<10; i++) {
+    for (int i=0; i<50; i++) {
         NSUInteger newIdentifier = self.loadedItems.count;
         
         MyItemProperties newItem;

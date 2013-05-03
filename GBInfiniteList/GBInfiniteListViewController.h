@@ -19,4 +19,7 @@
 
 -(void)reset;//foo test
 
+-(void)scrollUp;//foo testing
+-(void)scrollDown;
+
 @end
