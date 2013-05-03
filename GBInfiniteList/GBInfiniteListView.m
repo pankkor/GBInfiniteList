@@ -126,7 +126,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 @property (strong, nonatomic) NSMutableDictionary                   *loadedViews;
 
 //For keeping track of which item is the last one loaded
-@property (assign, nonatomic) NSInteger                             lastLoadedItemIdentifier;
+@property (assign, nonatomic) NSInteger                             uniqueItemIdentifier;
 
 @end
 
@@ -381,7 +381,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     
     //reset the geometry stuff
     self.actualListOrigin = 0;
-    self.lastLoadedItemIdentifier = -1;
+    self.uniqueItemIdentifier = -1;
     self.numberOfColumns = 0;
     self.requiredViewWidth = 0;
     self.outerPadding = UIEdgeInsetsZero;
@@ -796,78 +796,93 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Private API: Data dance
 
 -(void)_iterateWithRecyclerEnabled:(BOOL)shouldRecycle {
-//    shouldRecycle = NO;//foo shunt
-    l(@"\n\n");
-    l(@"_iterateWithRecyclerEnabled: %@", _b(shouldRecycle));
+//    l(@"\n\n");
+//    l(@"_iterateWithRecyclerEnabled: %@", _b(shouldRecycle));
     if (self.isDataDanceActive) {
         if (shouldRecycle) [self _recyclerLoopWithForcedRecyclingOfEverything:NO];
         [self _drawAndLoadLoop];
         [self _handleNoItemsView];
     }
-    l(@"\n\n");
+//    l(@"\n\n");
 }
 
 -(void)_recyclerLoopWithForcedRecyclingOfEverything:(BOOL)forceRecycleAll {
-    l(@"_recyclerLoopWithForcedRecyclingOfEverything: %@", _b(forceRecycleAll));
-    
-    //foo add forced recycling somewhere
+//    l(@"_recyclerLoopWithForcedRecyclingOfEverything: %@", _b(forceRecycleAll));
     
     //loop over every column
     CGFloat loadedZoneTop = self.scrollView.contentOffset.y;
     CGFloat loadedZoneHeight = self.scrollView.bounds.size.height + self.loadTriggerDistance;
     GBFastArray *columnStack;
     for (int columnIndex=0; columnIndex<self.numberOfColumns; columnIndex++) {
-        columnStack = self.columnStacks[columnIndex];
-        
-        //if there's nothing in the column, get out of here
+        //if there's nothing in this column, skip to next one
         if (IsGBInfiniteListColumnBoundariesUndefined(self.columnStacksLoadedItemBoundaryIndices[columnIndex])) {
-            l(@"nothing inside column when recycling");//foo
             continue;
         }
         
-        //prepare for checking whether it's visible or not
-        GBInfiniteListItemMeta nextItemUp;
+        //remember the column stack for this column iteration
+        columnStack = self.columnStacks[columnIndex];
         
-        //search top down first
-        NSInteger index = self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex;
-        while (index <= self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex) {
-            nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
-            
-            //check if item is visible? NO
-            if (!Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {
+        //we're gonna need an index
+        NSInteger index;
+        
+        //forced
+        if (forceRecycleAll) {
+            index = self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex;
+            while (index <= self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex) {
+                //get the item
+                GBInfiniteListItemMeta nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
+                
+                //recycle it
                 [self _recycleItemWithMeta:nextItemUp indexInColumn:index column:columnIndex inColumnBoundaryWithAddress:self.columnStacksLoadedItemBoundaryIndices[columnIndex]];
+                
+                index++;
             }
-            //otherwise start searching from the other end
-            else {
-                break;
-            }
-            
-            //if we didnt find one and got here... try again
-            index++;
         }
-        
-        //now search bottom up
-        index = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;
-        while (index >= self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex) {
-            nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
+        //if not forced
+        else {
+            //try top down search first for invisibles
+            index = self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex;
+            while (index <= self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex) {
+                if (![self _recycleIfInvisibleItemWithIndex:index inColumnStack:columnStack columnIndex:columnIndex loadedZoneTop:loadedZoneTop loadedZoneHeight:loadedZoneHeight]) {
+                    //didn't get recycled so start searching from other end
+                    break;
+                }
+                
+                //keep going
+                index++;
+            }
             
-            //check if item is visible? NO
-            if (!Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {
-                [self _recycleItemWithMeta:nextItemUp indexInColumn:index column:columnIndex inColumnBoundaryWithAddress:self.columnStacksLoadedItemBoundaryIndices[columnIndex]];
-            }
-            //otherwise start searching from the other end
-            else {
-                break;
-            }
+            //now try bottom up search for invisibles
+            index = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;
+            while (index >= self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex) {
+                if (![self _recycleIfInvisibleItemWithIndex:index inColumnStack:columnStack columnIndex:columnIndex loadedZoneTop:loadedZoneTop loadedZoneHeight:loadedZoneHeight]) {
+                    //we must be done
+                    break;
+                }
 
-            //try again
-            index--;
+                //keep going
+                index--;
+            }
         }
     }
 }
 
--(void)_attemptRecycleOfItem {
+-(BOOL)_recycleIfInvisibleItemWithIndex:(NSUInteger)index inColumnStack:(GBFastArray *)columnStack columnIndex:(NSUInteger)columnIndex loadedZoneTop:(CGFloat)loadedZoneTop loadedZoneHeight:(CGFloat)loadedZoneHeight {
+    GBInfiniteListItemMeta nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
     
+    //check if item is visible? NO
+    if (!Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {
+        //recycle the item
+        [self _recycleItemWithMeta:nextItemUp indexInColumn:index column:columnIndex inColumnBoundaryWithAddress:self.columnStacksLoadedItemBoundaryIndices[columnIndex]];
+        
+        //report back that he got recycled
+        return YES;
+    }
+    //otherwise...
+    else {
+        //...report that he didn't get recycled
+        return NO;
+    }
 }
 
 //draw+load loop: a loop that tries to fill the screen by asking for more data, or if there isnt any more available: starting the dataload protocol in hopes of getting called again when more is available
@@ -879,7 +894,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     //check if there is a gap? BOTTOM
     if (nextGap.type == GBInfiniteListTypeOfGapBottom) {
         //calculate the next item identifier
-        NSUInteger newItemIdentifier = self.lastLoadedItemIdentifier + 1;
+        NSUInteger newItemIdentifier = self.uniqueItemIdentifier + 1;
         
         //ask if there is another item currently available? YES
         if ([self.dataSource isViewForItem:newItemIdentifier currentlyAvailableInInfiniteListView:self]) {
@@ -979,7 +994,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_recycleItemWithMeta:(GBInfiniteListItemMeta)itemMeta indexInColumn:(NSUInteger)index column:(NSUInteger)columnIndex inColumnBoundaryWithAddress:(GBInfiniteListColumnBoundaries)columnBoundaries {
-    l(@"_recycleItemWithMeta");
+//    l(@"_recycleItemWithMeta");
     //find the old view
     NSNumber *key = @(itemMeta.itemIdentifier);
     UIView *oldView = self.loadedViews[key];
@@ -1069,7 +1084,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 
 -(void)_drawAndStoreNewItem:(NSUInteger)newItemIdentifier withView:(UIView *)itemView inColumn:(NSUInteger)columnIndex {
 //    l(@"_drawAndStoreNewItem");
-    l(@".");
+//    l(@".");
     //create meta struct which gets filled in along the way
     GBInfiniteListItemMeta newItemMeta;
     newItemMeta.itemIdentifier = newItemIdentifier;
@@ -1095,11 +1110,11 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     
     //if its the first item, set the indices to both be 0
     if (columnBoundaries.lastLoadedIndex == GBColumnIndexUndefined) {
-        self.columnStacksLoadedItemBoundaryIndices[columnIndex] = (GBInfiniteListColumnBoundaries){0,0};//foo
+        self.columnStacksLoadedItemBoundaryIndices[columnIndex] = (GBInfiniteListColumnBoundaries){0,0};
     }
     //else expand the last column boundary by 1
     else {
-        self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex += 1;//foo make sure this is actually setting it, rather than returning it, then setting it in thin air and then discarding it
+        self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex += 1;
     }
     
     //and add the meta struct to the columnStack at the correct index
@@ -1115,7 +1130,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     self.loadedViews[@(newItemIdentifier)] = itemView;
     
     //set the lastLoadedItem
-    self.lastLoadedItemIdentifier = newItemIdentifier;
+    self.uniqueItemIdentifier = newItemIdentifier;
     
     //draw the actual subview
     [self.scrollView addSubview:itemView];
@@ -1142,7 +1157,6 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     
     GBFastArray *columnStack;
     GBInfiniteListColumnBoundaries columnBoundaries;
-    
     //try each column one by one
     for (int columnIndex=0; columnIndex<self.numberOfColumns; columnIndex++) {
         columnStack = self.columnStacks[columnIndex];
@@ -1152,8 +1166,18 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
         GBInfiniteListItemMeta nextItemUp;
         NSInteger index = columnBoundaries.firstLoadedIndex;
         
-        //first check to see if the first item passes the top of the screen, and only if he doesnt should we start our search. If he does, we don't need to look further
-        if (nextItemUp.geometry.origin <= loadedZoneTop) {
+        //check if column is empty
+        if (index == GBColumnIndexUndefined) {
+            //column is empty so there can't be any gap above it
+            continue;
+        }
+        //check to see if its the first item, if so there can't be any gap above it
+        else if (index == 0) {
+            //don't need to search up this column any more
+            continue;
+        }
+        //check to see if the first item covers the top edge of the screen, and only if he doesnt should we start our search. If he does, we don't need to look further
+        else if (nextItemUp.geometry.origin <= loadedZoneTop) {
             //don't need to search up this column any more
             continue;
         }
@@ -1166,7 +1190,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
                 nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
                 
                 //check if item is visible
-                if (!Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {
+                if (Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {//was negated
                     GBInfiniteListGap newTopGap;
                     
                     newTopGap.type = GBInfiniteListTypeOfGapTop;

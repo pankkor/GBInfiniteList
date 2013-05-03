@@ -10,6 +10,7 @@
 		8A3465B5172FC37A00EE1621 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8A3465B4172FC37A00EE1621 /* Foundation.framework */; };
 		8A3465DE172FEE1000EE1621 /* GBInfiniteListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 8A3465DD172FEE1000EE1621 /* GBInfiniteListView.m */; };
 		8A3465E1172FEE3200EE1621 /* GBInfiniteListViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 8A3465E0172FEE3200EE1621 /* GBInfiniteListViewController.m */; };
+		8A4147311733A1AB005000CB /* MyView.m in Sources */ = {isa = PBXBuildFile; fileRef = 8A4147301733A1AB005000CB /* MyView.m */; };
 		8AF78D8717311DB400F61ECC /* UIView+GBInfiniteList.m in Sources */ = {isa = PBXBuildFile; fileRef = 8AF78D8617311DB400F61ECC /* UIView+GBInfiniteList.m */; };
 /* End PBXBuildFile section */
 
@@ -66,6 +67,8 @@
 		8A3465E0172FEE3200EE1621 /* GBInfiniteListViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GBInfiniteListViewController.m; sourceTree = "<group>"; };
 		8A3465E2172FEE4400EE1621 /* GBInfiniteList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GBInfiniteList.h; sourceTree = "<group>"; };
 		8A3465E3172FF11500EE1621 /* GBToolbox.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GBToolbox.xcodeproj; path = ../GBToolbox/GBToolbox.xcodeproj; sourceTree = "<group>"; };
+		8A41472F1733A1AB005000CB /* MyView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MyView.h; sourceTree = "<group>"; };
+		8A4147301733A1AB005000CB /* MyView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MyView.m; sourceTree = "<group>"; };
 		8AF78D8517311DB400F61ECC /* UIView+GBInfiniteList.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+GBInfiniteList.h"; sourceTree = "<group>"; };
 		8AF78D8617311DB400F61ECC /* UIView+GBInfiniteList.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+GBInfiniteList.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -118,6 +121,8 @@
 				8AF78D8617311DB400F61ECC /* UIView+GBInfiniteList.m */,
 				8A3465DF172FEE3200EE1621 /* GBInfiniteListViewController.h */,
 				8A3465E0172FEE3200EE1621 /* GBInfiniteListViewController.m */,
+				8A41472F1733A1AB005000CB /* MyView.h */,
+				8A4147301733A1AB005000CB /* MyView.m */,
 				8A3465B7172FC37A00EE1621 /* Supporting Files */,
 			);
 			path = GBInfiniteList;
@@ -234,6 +239,7 @@
 				8A3465DE172FEE1000EE1621 /* GBInfiniteListView.m in Sources */,
 				8A3465E1172FEE3200EE1621 /* GBInfiniteListViewController.m in Sources */,
 				8AF78D8717311DB400F61ECC /* UIView+GBInfiniteList.m in Sources */,
+				8A4147311733A1AB005000CB /* MyView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

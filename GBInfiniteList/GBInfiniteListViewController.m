@@ -9,12 +9,20 @@
 #import "GBInfiniteListViewController.h"
 
 #import "GBToolbox.h"//foo test
+#import "MyView.h"//foo test
+
+typedef struct {
+    NSUInteger identifier;
+    CGFloat hue;
+    CGFloat width;
+    CGFloat height;
+} MyItemProperties;//foo test
 
 @interface GBInfiniteListViewController ()
 
 @property (strong, nonatomic, readwrite) GBInfiniteListView *infiniteListView;
 
-@property (assign, nonatomic) NSUInteger numberOfCurrentlyLoadedViews;//foo test
+@property (strong, nonatomic) NSMutableArray *loadedItems;//foo test
 
 @end
 
@@ -38,9 +46,7 @@
     l(@"viewdidload with following frame:");
     _lRect(self.view.frame);
     
-    self.numberOfCurrentlyLoadedViews = 10;//foo try with 0
-    
-//    self.view.backgroundColor = [UIColor blueColor];//foo test
+    self.loadedItems = [[NSMutableArray alloc] init];
     
     self.infiniteListView = [[GBInfiniteListView alloc] initWithFrame:self.view.bounds];
     self.infiniteListView.delegate = self;
@@ -72,38 +78,59 @@
 }
 
 -(BOOL)isViewForItem:(NSUInteger)itemIdentifier currentlyAvailableInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return itemIdentifier < self.numberOfCurrentlyLoadedViews;
+    return itemIdentifier < self.loadedItems.count;
 }
 
 -(UIView *)viewForItem:(NSUInteger)itemIdentifier inInfiniteListView:(GBInfiniteListView *)infiniteListView {
     //foo update recycling API so you can give it a closure which it can use to create a new view so u always have a view, dequeueViewWithReuseIdentifier:orElseCreateWithBlock:
     
+    NSLog(@"ident: %d", itemIdentifier);
+    
+    //get a view object...
+    MyView *myView;
     //try to recycle one
-    UIView *myView;
     if (NO) {
         
     }
+    //otherwise generate a new one
     else {
-        myView = [self _createNewView];
+        myView = [[MyView alloc] initWithFrame:CGRectMake(0, 0, 0, 0)];
     }
     
-    [self _configureViewRandomly:myView];
+    //configure the view
+    MyItemProperties myItem;
+    [[self.loadedItems objectAtIndex:itemIdentifier] getValue:&myItem];
+    myView.frame = CGRectMake(0, 0, myItem.width, myItem.height);
+    [myView setHue:myItem.hue];
+    [myView setText:[NSString stringWithFormat:@"#%d", myItem.identifier]];
     
     return myView;
 }
 
 -(BOOL)canLoadMoreItemsInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    NSLog(@"can laoding more?");
+//    NSLog(@"can laoding more?");
     return YES;//foo try no also
 }
 
 -(void)startLoadingMoreItemsInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    NSLog(@"start laoding");
+    NSLog(@"start loading more from server");
     
-    NSLog(@"loaded more");
-    self.numberOfCurrentlyLoadedViews += 10;//foo try different number of loaded items
+//    NSLog(@"loaded more");
+    
+    //pretend to download some stuff off a server and store it locally
+    for (int i=0; i<10; i++) {
+        NSUInteger newIdentifier = self.loadedItems.count;
+        
+        MyItemProperties newItem;
+        newItem.identifier = newIdentifier;
+        newItem.width = self.infiniteListView.requiredViewWidth;
+        newItem.height = [self randomIntegerFrom:60 to:160];
+        newItem.hue = [self randomHue];
+        
+        [self.loadedItems addObject:[NSValue valueWithBytes:&newItem objCType:@encode(MyItemProperties)]];
+    }
+    
     [self.infiniteListView didFinishLoadingMoreItems];
-    
     
 //    ExecuteAfter(0, ^{//foo try different delay
 //        NSLog(@"loaded more");
@@ -113,7 +140,7 @@
 }
 
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView didRecycleView:(UIView *)view lastUsedByItem:(NSUInteger)itemIdentifier {
-    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
+//    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
 }
 
 -(UIView *)headerViewInInfiniteListView:(GBInfiniteListView *)infiniteListView {
@@ -150,28 +177,31 @@
 
 #pragma mark - Testing
 
--(UIView *)_createNewView {
-    return [[UIView alloc] init];
-}
 
--(UIView *)_configureViewRandomly:(UIView *)view {
-    view.frame = CGRectMake(0, 0, self.infiniteListView.requiredViewWidth, [self _randomIntegerFrom:60 to:160]);
-    view.backgroundColor = [self _randomColor];
-    
-    return view;
-}
+
+//-(UIView *)_configureViewRandomly:(UIView *)view {
+//    view.frame = CGRectMake(0, 0, self.infiniteListView.requiredViewWidth, [self _randomIntegerFrom:60 to:160]);
+//    view.backgroundColor = [self _randomColor];
+//    
+//    return view;
+//}
 
 //foo add to GBToolbox
--(NSInteger)_randomIntegerFrom:(NSInteger)min to:(NSInteger)max {
+-(NSInteger)randomIntegerFrom:(NSInteger)min to:(NSInteger)max {
     return arc4random() % (max-min) + min;
 }
 
 //foo add to GBToolbox
--(UIColor *)_randomColor {
+-(UIColor *)randomColor {
     CGFloat hue = ( arc4random() % 256 / 256.0 );  //  0.0 to 1.0
     CGFloat saturation = ( arc4random() % 128 / 256.0 ) + 0.5;  //  0.5 to 1.0, away from white
     CGFloat brightness = ( arc4random() % 128 / 256.0 ) + 0.5;  //  0.5 to 1.0, away from black
     return [UIColor colorWithHue:hue saturation:saturation brightness:brightness alpha:1];
+}
+
+//foo add to GBToolbox
+-(CGFloat)randomHue {
+    return arc4random() % 256 / 256.0;
 }
 
 @end
