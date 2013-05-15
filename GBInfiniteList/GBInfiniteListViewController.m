@@ -58,6 +58,10 @@ typedef struct {
     self.infiniteListView.dataSource = self;
     
     [self.view addSubview:self.infiniteListView];
+    
+    ExecuteAfter(3, ^{
+        l(@"go");
+    });
 }
 
 #pragma mark - GBInfiniteListViewDataSource
@@ -83,28 +87,18 @@ typedef struct {
 }
 
 -(BOOL)isViewForItem:(NSUInteger)itemIdentifier currentlyAvailableInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    l(@"avail?: %d", itemIdentifier);
+//    l(@"avail?: %d", itemIdentifier);
     
     return itemIdentifier < self.loadedItems.count;
 }
 
 -(UIView *)viewForItem:(NSUInteger)itemIdentifier inInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    l(@"load item: %d", itemIdentifier);
-
-    //foo update recycling API so you can give it a closure which it can use to create a new view so u always have a view, dequeueViewWithReuseIdentifier:orElseCreateWithBlock:
-    
-//    NSLog(@"ident: %d", itemIdentifier);
+//    l(@"load item: %d", itemIdentifier);
     
     //get a view object...
-    MyView *myView;
-    //try to recycle one
-    if (NO) {
-        
-    }
-    //otherwise generate a new one
-    else {
-        myView = [[MyView alloc] initWithFrame:CGRectMake(0, 0, 0, 0)];
-    }
+    MyView *myView = (MyView *)[infiniteListView dequeueReusableViewWithIdentifier:@"SimpleColorBox" elseCreateWithBlock:^UIView *{
+        return [[MyView alloc] initWithFrame:CGRectMake(0, 0, 0, 0)];
+    }];
     
     //configure the view
     MyItemProperties myItem;
@@ -113,20 +107,15 @@ typedef struct {
     [myView setHue:myItem.hue];
     [myView setText:[NSString stringWithFormat:@"#%d", myItem.identifier]];
     
-//    l(@".");
-    
     return myView;
 }
 
 -(BOOL)canLoadMoreItemsInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-//    NSLog(@"can laoding more?");
     return YES;//foo try no also
 }
 
 -(void)startLoadingMoreItemsInInfiniteListView:(GBInfiniteListView *)infiniteListView {
 //    NSLog(@"start loading more from server");
-    
-//    NSLog(@"loaded more");
     
     //pretend to download some stuff off a server and store it locally
     for (int i=0; i<50; i++) {
@@ -151,7 +140,7 @@ typedef struct {
 }
 
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView didRecycleView:(UIView *)view lastUsedByItem:(NSUInteger)itemIdentifier {
-    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
+//    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
 }
 
 -(UIView *)headerViewInInfiniteListView:(GBInfiniteListView *)infiniteListView {
@@ -187,15 +176,6 @@ typedef struct {
 //#pragma mark - GBInfiniteListViewDelegate
 
 #pragma mark - Testing
-
-
-
-//-(UIView *)_configureViewRandomly:(UIView *)view {
-//    view.frame = CGRectMake(0, 0, self.infiniteListView.requiredViewWidth, [self _randomIntegerFrom:60 to:160]);
-//    view.backgroundColor = [self _randomColor];
-//    
-//    return view;
-//}
 
 //foo add to GBToolbox
 -(NSInteger)randomIntegerFrom:(NSInteger)min to:(NSInteger)max {

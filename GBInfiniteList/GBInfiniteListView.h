@@ -8,11 +8,13 @@
 
 #import <UIKit/UIKit.h>
 
-extern NSString * const GBTypeMismatchException;
+#import "GBToolbox.h"
+
+//Exceptions (some others are defined in GBToolbox's GBConstants_Common.h)
 extern NSString * const GBWidthMismatchException;
 extern NSString * const GBSizeMismatchException;
-extern NSString * const GBUnexpectedMessageException;
 
+//Forward declarations
 @protocol GBInfiniteListViewDataSource;
 @protocol GBInfiniteListViewDelegate;
 
@@ -36,9 +38,6 @@ extern NSString * const GBUnexpectedMessageException;
 
 #pragma mark - Data dance
 
-////Asks for the views of the visible items again of the dataSource
-//-(void)reloadVisibleItems;
-
 //reset (removes everything, cleans up memory and scrolls to top with no animation)
 -(void)reset;
 
@@ -47,6 +46,9 @@ extern NSString * const GBUnexpectedMessageException;
 
 //Lets you recycle views which have gone off screen rather than creating and destroying them all the time
 -(UIView *)dequeueReusableViewWithIdentifier:(NSString *)viewIdentifier;
+
+//Same as above but you can use a block to more conveniently alloc views, keeps your client code cleaner as you don't need if checks
+-(UIView *)dequeueReusableViewWithIdentifier:(NSString *)viewIdentifier elseCreateWithBlock:(UIView *(^)(void))block;
 
 #pragma mark - Scrolling & Co.
 
@@ -65,7 +67,7 @@ extern NSString * const GBUnexpectedMessageException;
 #pragma mark - Caching
 
 //Flushes the reusables views which are being pooled for reuse. Call this when you get a memory warning
--(void)flushReusableViewPool;
+-(void)flushReusableViewsPool;
 
 @end
 
