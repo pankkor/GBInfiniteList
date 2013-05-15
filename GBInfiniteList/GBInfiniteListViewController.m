@@ -60,8 +60,8 @@ typedef struct {
     [self.view addSubview:self.infiniteListView];
     
     ExecuteAfter(3, ^{
-        l(@"go");
-        [self.infiniteListView reset];
+//        l(@"go");
+//        [self.infiniteListView reset];//foo this doesnt work
     });
 }
 

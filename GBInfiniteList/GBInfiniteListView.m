@@ -1512,6 +1512,52 @@ innerLoop:
 
 //kickoffs by: 1)_startDataDance and 2)scrolling of scrollView, 3)moreItemsAvailable message
 
+//gap search strategy:
+    //move direction: down || none
+        //each column
+            //is column empty? (columnstack.count == 0)
+                //return that as new gap
+            //else is something still loaded? (! indicesUndefined)
+                //start at bottom, enumerate downwards sequentially
+                    //item surpasses screen? YES
+                        //continue to next column
+                    //item surpasses screen? NO
+                        //is item last one? index == count-1
+                            //remember as candidate: this is the last item in the column
+                        //is item last one? NO
+                            //found it! return the old gap!
+            //else (so column isn't empty, but everything is unloaded)
+                //do binary search for a visible item, top: lastUnloaded, bottom: count-1
+                //as soon as we find one, do a sequential search to find the first visible one and return that one as the gap (this way when we recurse back he will continue searching properly as if we didn't have to do this tricky binary search)
+        
+        //if we got here it means all columns are depleted
+        //if there are shortest column candidates? YES
+            //find the shortest column
+            //return the shortest column gap as a new gap
+
+
+    //move direction: up
+        //each column
+            //is column empty? (columnstack.count == 0)
+                //continue, can't be any gaps above in that case
+            //else if first loaded item is 0? YES
+                //continue, can't be any gaps above either in this case
+            //else if something is still loaded? (! indicesUndefined)
+                //start at top, enumerate upwards sequentially
+                    //item surpasses screen? YES
+                        //continue to next column
+                    //item supasses screen? NO
+                        //is it the first item? NO
+                            //found it, return gap!
+            //else (column isnt empty, not first item, nothing is still loaded)
+                //do binary search for a visible item, top:0, bottom: lastUnloaded
+                //as soon as we find one, do a sequential search to find the last visibleone, and return that one as gap
+
+
+    //if we got here, then theres no gap
+    //return no gap
+
+
 //iterate:
     //recycler loop (detects who went off and informs delegate and, does actual recycling and tells delegate)
     //drawing loop (draws available items from datasource or kicks off load protocol)
@@ -1566,7 +1612,7 @@ innerLoop:
 
 //draw+load loop: a loop that tries to fill the screen by asking for more data, or if there isnt any more available: starting the dataload protocol in hopes of getting called again when more is available
     //is dataDanceActive? YES
-        //check if there is a gap (take into account loadingTriggerDistance)? Bottom
+        //check if there is a gap (take into account loadingTriggerDistance)? new
             //ask if there is another item currently available? YES
                 //ask for the item
                     //check that item is a UIView? YES
@@ -1596,7 +1642,7 @@ innerLoop:
                         //we're done
                 //check to see if it has already requested more items? NO
                     //we're done
-        //check if there is a gap? TOP
+        //check if there is a gap? old
             //ask for the item
                 //check that item is UIView? YES
                     //check to make sure item size matches the stored one? YES
