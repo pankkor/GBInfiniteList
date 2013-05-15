@@ -359,6 +359,13 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     return [self.loadedViews copy];
 }
 
+#pragma mark - Caching
+
+-(void)flushReusableViewPool {
+    //simply replaces the pool with a new one, which causes the old one to trickle down releases and release everything held in it
+    self.recycledViewsPool = [NSMutableDictionary new];
+}
+
 #pragma mark - UIScrollViewDelegate
 
 -(void)scrollViewDidScroll:(UIScrollView *)scrollView {

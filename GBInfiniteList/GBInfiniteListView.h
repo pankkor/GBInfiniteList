@@ -62,6 +62,11 @@ extern NSString * const GBUnexpectedMessageException;
 //Lets you get an array of all the currently displayed items.
 -(NSDictionary *)itemsCurrentlyOnScreen;
 
+#pragma mark - Caching
+
+//Flushes the reusables views which are being pooled for reuse. Call this when you get a memory warning
+-(void)flushReusableViewPool;
+
 @end
 
 
