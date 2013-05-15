@@ -1061,7 +1061,7 @@ innerLoop:
 //draw+load loop: a loop that tries to fill the screen by asking for more data, or if there isnt any more available: starting the dataload procedure in hopes of getting called again when more is available
 -(void)_drawAndLoadLoopWithHint:(GBInfiniteListDirectionMovedHint)directionMovedHint {
 //    l(@"_drawAndLoadLoop");
-    //check if there is a gap (take into account loadingTriggerDistance)?
+    //check if there is a gap?
     GBInfiniteListGap nextGap = [self _findNextGapWithHint:directionMovedHint];
     
     //check if there is a gap? end of list
@@ -1101,6 +1101,11 @@ innerLoop:
             if (!self.hasRequestedMoreItems) {
                 //ask if it can load more items? YES
                 if ([self.dataSource canLoadMoreItemsInInfiniteListView:self]) {
+                    //send delegate the infiniteListViewWillStartLoadingMoreItems: message
+                    if ([self.delegate respondsToSelector:@selector(infiniteListViewWillStartLoadingMoreItems:)]) {
+                        [self.delegate infiniteListViewWillStartLoadingMoreItems:self];
+                    }
+                    
                     //remember that you're expecting to receive the moreItemsAvailable: message
                     self.hasRequestedMoreItems = YES;
                     
@@ -1109,11 +1114,6 @@ innerLoop:
                     
                     //send datasource the startLoadingMoreItemsInInfiniteListView: message
                     [self.dataSource startLoadingMoreItemsInInfiniteListView:self];
-                    
-                    //send delegate the infiniteListViewDidStartLoadingMoreItems: message
-                    if ([self.delegate respondsToSelector:@selector(infiniteListViewDidStartLoadingMoreItems:)]) {
-                        [self.delegate infiniteListViewDidStartLoadingMoreItems:self];
-                    }
                 }
                 //ask if it can load more items? NO
                 else {
@@ -1232,7 +1232,7 @@ innerLoop:
     itemGeometry.height = itemView.frame.size.height;
     
     //if its the first item, stick it to the top, where the top is origin+outerPadding.top+header+headerMargin
-    if (columnBoundaries.lastLoadedIndex == GBColumnIndexUndefined) {
+    if (columnBoundaries.lastLoadedIndex == GBColumnIndexUndefined) {//foo change this to something a little more elegant, i.e. self.columnStacks[columnStack].isEmpty?
         itemGeometry.origin = self.actualListOrigin;
     }
     //otherwise it's lastitem.origin + lastitem.height + verticalItemMargin
@@ -1245,7 +1245,7 @@ innerLoop:
     newItemMeta.geometry = itemGeometry;
     
     //if its the first item, set the indices to both be 0
-    if (columnBoundaries.lastLoadedIndex == GBColumnIndexUndefined) {
+    if (columnBoundaries.lastLoadedIndex == GBColumnIndexUndefined) {//foo change this to something a little more elegant, i.e. self.columnStacks[columnStack].isEmpty?
         self.columnStacksLoadedItemBoundaryIndices[columnIndex] = (GBInfiniteListColumnBoundaries){0,0};
     }
     //else expand the last column boundary by 1
@@ -1329,8 +1329,8 @@ innerLoop:
                     
                     //item surpasses screen? o + h > loadedZoneBottom // foo maybe add margin
                     if (nextItemUp.geometry.origin + nextItemUp.geometry.height > loadedZoneBottom)
-                        //continue to next column
-                        continue;
+                        //break to continue to next column
+                        break;
                     //item surpasses screen? NO
                     else {
                         //is item last one? index == count-1
@@ -1347,8 +1347,8 @@ innerLoop:
                                 runningShortestColumnLength = currentColumnLength;
                             }
                             
-                            //continue to next column
-                            continue;
+                            //break out of this search to continue to next column
+                            break;
                         }
                         //is item last one? NO
                         else {
@@ -1394,12 +1394,12 @@ innerLoop:
             
             //is column empty?
             if (columnStack.isEmpty) {
-                //continue, can't be any gaps above in that case
+                //continue to next column, can't be any gaps above in that case
                 continue;
             }
             //else if first loaded item is 0? YES
             else if (firstLoadedIndex == 0) {
-                //continue, can't be any gaps above either in this case
+                //continue to next column, can't be any gaps above either in this case
                 continue;
             }
             //else if something is still loaded? (! indicesUndefined)
@@ -1411,8 +1411,8 @@ innerLoop:
                     
                     //item surpasses screen? o < loadedZoneTop
                     if (nextItemUp.geometry.origin < loadedZoneTop)
-                        //continue to next column
-                        continue;
+                        //break to continue to next column
+                        break;
                     //item surpasses screen? NO
                     else {
                         //is it the first item? NO

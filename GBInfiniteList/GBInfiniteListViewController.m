@@ -83,10 +83,14 @@ typedef struct {
 }
 
 -(BOOL)isViewForItem:(NSUInteger)itemIdentifier currentlyAvailableInInfiniteListView:(GBInfiniteListView *)infiniteListView {
+    l(@"avail?: %d", itemIdentifier);
+    
     return itemIdentifier < self.loadedItems.count;
 }
 
 -(UIView *)viewForItem:(NSUInteger)itemIdentifier inInfiniteListView:(GBInfiniteListView *)infiniteListView {
+    l(@"load item: %d,\n\n", itemIdentifier);
+
     //foo update recycling API so you can give it a closure which it can use to create a new view so u always have a view, dequeueViewWithReuseIdentifier:orElseCreateWithBlock:
     
 //    NSLog(@"ident: %d", itemIdentifier);
@@ -147,7 +151,7 @@ typedef struct {
 }
 
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView didRecycleView:(UIView *)view lastUsedByItem:(NSUInteger)itemIdentifier {
-//    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
+    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
 }
 
 -(UIView *)headerViewInInfiniteListView:(GBInfiniteListView *)infiniteListView {

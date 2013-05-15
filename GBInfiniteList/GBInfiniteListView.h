@@ -162,7 +162,7 @@ extern NSString * const GBUnexpectedMessageException;
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView view:(UIView *)view correspondingToItemDidComeOnScreen:(NSUInteger)itemIdentifier;
 
 //Started loading. Lets you connect UI stuff to this. You shouldn't use this for the data dance, the dataSource has his own delegate methods for this. This is just for UI related stuff, i.e. if you want to show an auxiliarry loading indicator
--(void)infiniteListViewDidStartLoadingMoreItems:(GBInfiniteListView *)infiniteListView;
+-(void)infiniteListViewWillStartLoadingMoreItems:(GBInfiniteListView *)infiniteListView;
 
 //Sent as soon as you tell the view that the loading has completed. Same semantics as above. Don't use this for the data dance.
 -(void)infiniteListViewDidFinishLoadingMoreItems:(GBInfiniteListView *)infiniteListView;
