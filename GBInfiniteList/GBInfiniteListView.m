@@ -38,8 +38,8 @@ typedef struct {
 
 typedef enum {
     GBInfiniteListTypeOfGapNone,
-    GBInfiniteListTypeOfGapTop,
-    GBInfiniteListTypeOfGapBottom,
+    GBInfiniteListTypeOfGapExisting,
+    GBInfiniteListTypeOfGapEndOfList,
 } GBInfiniteListTypeOfGap;
 
 typedef struct {
@@ -263,7 +263,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     }
 }
 
-#pragma mark - Data dance
+#pragma mark - Public API: Data dance
 
 //-(void)reloadVisibleItems {
 //    //go through all visible items by going through each of the columnStacks according to the indices and redraw the items
@@ -329,7 +329,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     return nil;
 }
 
-#pragma mark - Scrolling & Co.
+#pragma mark - Public API: Scrolling & Co.
 
 -(void)scrollToTopAnimated:(BOOL)shouldAnimate {
 //    l(@"scrolltotop");
@@ -1058,14 +1058,14 @@ innerLoop:
     }
 }
 
-//draw+load loop: a loop that tries to fill the screen by asking for more data, or if there isnt any more available: starting the dataload protocol in hopes of getting called again when more is available
+//draw+load loop: a loop that tries to fill the screen by asking for more data, or if there isnt any more available: starting the dataload procedure in hopes of getting called again when more is available
 -(void)_drawAndLoadLoopWithHint:(GBInfiniteListDirectionMovedHint)directionMovedHint {
 //    l(@"_drawAndLoadLoop");
     //check if there is a gap (take into account loadingTriggerDistance)?
     GBInfiniteListGap nextGap = [self _findNextGapWithHint:directionMovedHint];
     
-    //check if there is a gap? BOTTOM
-    if (nextGap.type == GBInfiniteListTypeOfGapBottom) {
+    //check if there is a gap? end of list
+    if (nextGap.type == GBInfiniteListTypeOfGapEndOfList) {
         //calculate the next item identifier
         NSUInteger newItemIdentifier = self.lastLoadedItemIdentifier + 1;
         
@@ -1130,8 +1130,8 @@ innerLoop:
             }
         }
     }
-    //check if there is a gap? TOP
-    else if (nextGap.type == GBInfiniteListTypeOfGapTop) {
+    //check if there is a gap? old one (doesn't matter which side)
+    else if (nextGap.type == GBInfiniteListTypeOfGapExisting) {
         //ask for the item
         UIView *oldItemView = [self.dataSource viewForItem:nextGap.itemIdentifier inInfiniteListView:self];
         
@@ -1169,8 +1169,30 @@ innerLoop:
 -(void)_drawOldItemWithMeta:(GBInfiniteListItemMeta)itemMeta view:(UIView *)itemView indexInColumnStack:(NSUInteger)indexInColumnStack inColumn:(NSUInteger)columnIndex {
 //    l(@"_drawOldItemWithMeta");
     //update column boundary
-    self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex = indexInColumnStack;//foo
-
+    //boundary: undefined
+    if (IsGBInfiniteListColumnBoundariesUndefined(self.columnStacksLoadedItemBoundaryIndices[columnIndex])) {
+        //set first and last to the new index
+        self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex = indexInColumnStack;
+        self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex = indexInColumnStack;
+    }
+    //boundary: defined
+    else {
+        //are we extending first? (first - 1 == index)
+        if (self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex - 1 == indexInColumnStack) {
+            //first = item
+            self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex = indexInColumnStack;
+        }
+        //are we extending last? (last + 1 == index)
+        else if (self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex + 1 == indexInColumnStack) {
+            //last = item
+            self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex = indexInColumnStack;
+        }
+        //otherwise
+        else {
+            l(@"!!!!!!!!!!!!wtf how did we end up here. i though gaps were only every found immediately before the first loaded item, or immediately after the last loaded item");
+        }
+    }
+    
     //don't need to add it to columnStack because it's alread in there
     
     //find the left origin of the column
@@ -1263,8 +1285,66 @@ innerLoop:
 
 -(GBInfiniteListGap)_findNextGapWithHint:(GBInfiniteListDirectionMovedHint)directionMovedHint {
 //    l(@"_findNextGap");
+    
+    //prepare
     CGFloat loadedZoneTop = self.scrollView.contentOffset.y;
     CGFloat loadedZoneHeight = self.scrollView.bounds.size.height + self.loadTriggerDistance;
+    GBFastArray *columnStack;
+    GBInfiniteListColumnBoundaries columnBoundaries;
+    
+    //move direction: down || none
+        //each column
+            //is column empty? (columnstack.count == 0)
+                //return that as new gap
+            //else is something still loaded? (! indicesUndefined)
+                //start at bottom, enumerate downwards sequentially
+                    //item surpasses screen? YES
+                        //continue to next column
+                    //item surpasses screen? NO
+                        //is item last one? index == count-1
+                            //remember as candidate: this is the last item in the column
+                        //is item last one? NO
+                            //found it! return the old gap!
+            //else (so column isn't empty, but everything is unloaded)
+                //do binary search for a visible item, top: lastUnloaded, bottom: count-1
+                //as soon as we find one, do a sequential search to find the first visible one and return that one as the gap (this way when we recurse back he will continue searching properly as if we didn't have to do this tricky binary search)
+        
+        //if we got here it means all columns are depleted
+        //if there are shortest column candidates? YES
+            //find the shortest column
+            //return the shortest column gap as a new gap
+    
+    
+    //move direction: up
+        //each column
+            //is column empty? (columnstack.count == 0)
+                //continue, can't be any gaps above in that case
+            //else if first loaded item is 0? YES
+                //continue, can't be any gaps above either in this case
+            //else if something is still loaded? (! indicesUndefined)
+                //start at top, enumerate upwards sequentially
+                    //item surpasses screen? YES
+                        //continue to next column
+                    //item supasses screen? NO
+                        //is it the first item? NO
+                            //found it, return gap!
+            //else (column isnt empty, not first item, nothing is still loaded)
+                //do binary search for a visible item, top:0, bottom: lastUnloaded
+                //as soon as we find one, do a sequential search to find the last visibleone, and return that one as gap
+    
+    
+    //if we got here, then theres no gap
+    //return no gap
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     /* Search for gap at top */
@@ -1431,10 +1511,6 @@ innerLoop:
         //take them out of the trash
         //put them in the recycleable pool
         //send the delegate an infiniteListView:didRecycleView:lastUsedByItem: message
-
-//onscreen loop: (might replace this by just sending the delegate message from the drawAndLoad loop)
-    //find and enumerate all the items which have come on screen (can use a temporary place to store these instead of having to search for them)
-        //send the delegate an infiniteListView:view:correspondingToItemCameOnScreen: message
 
 //empty handler:
     //is anything shown? YES

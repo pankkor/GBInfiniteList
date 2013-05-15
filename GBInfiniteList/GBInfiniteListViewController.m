@@ -67,7 +67,7 @@ typedef struct {
 }
 
 -(CGFloat)loadTriggerDistanceInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return 100;//foo test different one
+    return 0;//foo test different one
 }
 
 -(UIEdgeInsets)outerPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView {
@@ -147,7 +147,7 @@ typedef struct {
 }
 
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView didRecycleView:(UIView *)view lastUsedByItem:(NSUInteger)itemIdentifier {
-    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
+//    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
 }
 
 -(UIView *)headerViewInInfiniteListView:(GBInfiniteListView *)infiniteListView {
