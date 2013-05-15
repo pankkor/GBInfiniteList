@@ -23,7 +23,10 @@ extern NSString * const GBUnexpectedMessageException;
 @property (weak, nonatomic) id<GBInfiniteListViewDelegate>          delegate;
 
 //Returns 0 if the Geometry dataSource methods haven't been called yet
-@property (assign, nonatomic, readonly) CGFloat                 requiredViewWidth;
+@property (assign, nonatomic, readonly) CGFloat                     requiredViewWidth;
+
+//Lets you set the pool size for the recyclable views, it will only ever retain up to the max you set here, any additional ones are immediately released. Each reuseIdentifier has its own pool
+@property (assign, nonatomic) NSUInteger                            maxReusableViewsPoolSize;
 
 #pragma mark - Designated initialiser
 

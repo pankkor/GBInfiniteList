@@ -71,6 +71,8 @@ static CGFloat const kDefaultLoadingViewTopMargin =                             
 static CGFloat const kDefaultHeaderViewBottomMargin =                                   0;
 static UIEdgeInsets const kPaddingForDefaultSpinner =                                   (UIEdgeInsets){4, 0, 4, 0};
 
+static NSUInteger const kDefaultRecyclableViewsPoolSize =                               10;
+
 static NSUInteger const GBColumnIndexUndefined =                                        NSUIntegerMax;
 static GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesUndefined =   {GBColumnIndexUndefined, GBColumnIndexUndefined};
 static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColumnBoundaries columnBoundaries) {
@@ -157,6 +159,27 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     else {
         self.isDataSourceSet = NO;
     }
+}
+
+-(void)setMaxReusableViewsPoolSize:(NSUInteger)maxReusableViewsPoolSize {
+    //if its bigger or equal
+    if (maxReusableViewsPoolSize >= _maxReusableViewsPoolSize) {
+        //do nothing special
+    }
+    //if its smaller
+    else {
+        //prune all the pools
+        for (id key in self.recycledViewsPool) {
+            NSMutableArray *pool = self.recycledViewsPool[key];
+            
+            //check if this pool is too long
+            if (pool.count > maxReusableViewsPoolSize) {
+                [pool removeObjectsInRange:NSMakeRange(maxReusableViewsPoolSize, (pool.count - 1) - maxReusableViewsPoolSize)];//foo test that this does what it should
+            }
+        }
+    }
+    
+    _maxReusableViewsPoolSize = maxReusableViewsPoolSize;
 }
 
 #pragma mark - Custom accessors: Lazy
@@ -402,6 +425,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     self.loadedViews = [NSMutableDictionary new];
     self.hasRequestedMoreItems = NO;
     self.lastScrollViewPosition = 0;
+    self.maxReusableViewsPoolSize = kDefaultRecyclableViewsPoolSize;
     
     //add the actual scrollview to the screen
     [self addSubview:self.scrollView];
@@ -420,7 +444,6 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 -(void)_finaliseScrollViewSize {
 //    l(@"_finaliseScrollViewSize to size:");
     self.scrollView.frame = self.bounds;
-    _lRect(self.scrollView.frame);
 }
 
 -(void)_initialiseColumnCountDependentDataStructures {
@@ -997,9 +1020,11 @@ innerLoop:
                 self.recycledViewsPool[oldView.reuseIdentifier] = [[NSMutableArray alloc] init];
             }
             
-            //foo add capacity check for pool, if its filled, then don't add it to the pool
+            //capacity check for pool, see if there is still space left
+            if (((NSArray *)self.recycledViewsPool[oldView.reuseIdentifier]).count < self.maxReusableViewsPoolSize) {
                 //add it to the pool
-                self.recycledViewsPool[oldView.reuseIdentifier] = oldView;
+                [self.recycledViewsPool[oldView.reuseIdentifier] addObject:oldView];
+            }
         }
         
         //take him offscreen
@@ -1025,94 +1050,6 @@ innerLoop:
         
     }
 }
-
-//-(void)_recyclerLoopWithHint:(GBInfiniteListDirectionMovedHint)directionMovedHint forcedRecyclingOfEverything:(BOOL)forceRecycleAll {
-////    l(@"_recyclerLoopWithForcedRecyclingOfEverything: %@", _b(forceRecycleAll));
-//    
-//    //loop over every column
-//    CGFloat loadedZoneTop = self.scrollView.contentOffset.y;
-//    CGFloat loadedZoneHeight = self.scrollView.bounds.size.height + self.loadTriggerDistance;
-//    GBFastArray *columnStack;
-//    for (int columnIndex=0; columnIndex<self.numberOfColumns; columnIndex++) {
-//        //if there's nothing in this column, skip to next one
-//        if (IsGBInfiniteListColumnBoundariesUndefined(self.columnStacksLoadedItemBoundaryIndices[columnIndex])) {
-//            continue;
-//        }
-//        
-//        //remember the column stack for this column iteration
-//        columnStack = self.columnStacks[columnIndex];
-//        
-//        //we're gonna need an index
-//        NSInteger index;
-//        
-//        //forced
-//        if (forceRecycleAll) {//foo untested. call reset and make sure it works
-//            index = self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex;
-//            while (index <= self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex) {
-//                //get the item
-//                GBInfiniteListItemMeta nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
-//                
-//                //recycle it
-//                [self _recycleItemWithMeta:nextItemUp indexInColumn:index column:columnIndex inColumnBoundaryWithAddress:self.columnStacksLoadedItemBoundaryIndices[columnIndex] moveLastLoadedPointer:YES];//foo test
-//                
-//                index++;
-//            }
-//        }
-//        //if not forced
-//        else {
-//            //try bottom up search for invisibles
-//            index = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;
-//            while (index > self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex) {
-//                if ([self _recycleIfInvisibleItemWithIndex:index inColumnStack:columnStack columnIndex:columnIndex loadedZoneTop:loadedZoneTop loadedZoneHeight:loadedZoneHeight moveLastLoadedPointer:YES]) {
-//                    //he got recycled, see if there is any more
-////                    l(@"recycled bottom: %d", index);
-//                    index--;
-//                }
-//                else {
-//                    //if it returns false it means he didn't get recycled so we must have found a visibl item and be done
-//                    break;
-//                }
-//            }
-//            
-////            l(@"column %d indices after bottom up search is: %d-%d", columnIndex, self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex, self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex);
-//            
-//            //try top down search for invisibles, but only if the last loaded index is greater than the first
-//            index = self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex;
-//            while (index <= self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex) {
-//                if ([self _recycleIfInvisibleItemWithIndex:index inColumnStack:columnStack columnIndex:columnIndex loadedZoneTop:loadedZoneTop loadedZoneHeight:loadedZoneHeight moveLastLoadedPointer:NO]) {
-//                    //he got recycled, see if there is any more
-////                    l(@"recycled top: %d", index);
-//                    index++;
-//                }
-//                else {
-//                    //if it returns false it means he didn't get recycled so we must have found a visibl item and be done
-//                    break;
-//                }
-//            }
-//            
-////            l(@"column %d indices after top down search is: %d-%d", columnIndex, self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex, self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex);
-////            l(@"\n\n");
-//        }
-//    }
-//}
-//
-//-(BOOL)_recycleIfInvisibleItemWithIndex:(NSUInteger)index inColumnStack:(GBFastArray *)columnStack columnIndex:(NSUInteger)columnIndex loadedZoneTop:(CGFloat)loadedZoneTop loadedZoneHeight:(CGFloat)loadedZoneHeight moveLastLoadedPointer:(BOOL)moveLastLoadedPointer {
-//    GBInfiniteListItemMeta nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
-//    
-//    //check if item is visible? NO
-//    if (!Lines1DOverlap(loadedZoneTop, loadedZoneHeight + self.verticalItemMargin, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {//need to add the verticalItemMargin because items are loaded as soon edge of the prebious item is exceeded, so they can be placed offscreen if the scroll distance is less than the margin
-//        //recycle the item
-//        [self _recycleItemWithMeta:nextItemUp indexInColumn:index column:columnIndex inColumnBoundaryWithAddress:self.columnStacksLoadedItemBoundaryIndices[columnIndex] moveLastLoadedPointer:moveLastLoadedPointer];
-//        
-//        //report back that he got recycled
-//        return YES;
-//    }
-//    //otherwise...
-//    else {
-//        //...report that he didn't get recycled
-//        return NO;
-//    }
-//}
 
 //draw+load loop: a loop that tries to fill the screen by asking for more data, or if there isnt any more available: starting the dataload protocol in hopes of getting called again when more is available
 -(void)_drawAndLoadLoopWithHint:(GBInfiniteListDirectionMovedHint)directionMovedHint {

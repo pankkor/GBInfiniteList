@@ -51,9 +51,6 @@ typedef struct {
 -(void)viewDidLoad {
     [super viewDidLoad];
     
-    l(@"viewdidload with following frame:");
-    _lRect(self.view.frame);
-    
     self.loadedItems = [[NSMutableArray alloc] init];
     
     self.infiniteListView = [[GBInfiniteListView alloc] initWithFrame:self.view.bounds];
@@ -150,7 +147,7 @@ typedef struct {
 }
 
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView didRecycleView:(UIView *)view lastUsedByItem:(NSUInteger)itemIdentifier {
-//    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
+    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
 }
 
 -(UIView *)headerViewInInfiniteListView:(GBInfiniteListView *)infiniteListView {
