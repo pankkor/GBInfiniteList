@@ -1367,8 +1367,57 @@ innerLoop:
                 }
             }
             //else (so column isn't empty, but everything is unloaded)
-                //do binary search for a visible item, top: lastUnloaded, bottom: count-1
-                //as soon as we find one, do a sequential search to find the first visible one and return that one as the gap (this way when we recurse back he will continue searching properly as if we didn't have to do this tricky binary search)
+            else {
+                //do binary search for a visible item, top/low: lastUnloaded, bottom/high: count-1
+                index = [columnStack binarySearchForIndexWithLow:self.lastRecycledItemsIdentifiers[columnIndex] high:columnStack.count-1 searchLambda:^GBSearchResult(void *candidateItem) {
+                    GBInfiniteListItemMeta *nativeCandidateItem = (GBInfiniteListItemMeta *)candidateItem;
+                    
+                    //if visible: bingo
+                    if (Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nativeCandidateItem->geometry.origin, nativeCandidateItem->geometry.height)) {
+                        return GBSearchResultMatch;
+                    }
+                    //if the item is somewhere before, then we've gone too far
+                    else if (nativeCandidateItem->geometry.origin > loadedZoneTop) {
+                        return GBSearchResultLow;
+                    }
+                    //only other option is that the item is after
+                    else {
+                        return GBSearchResultHigh;
+                    }
+                }];
+
+                //foo if it doesnt find one then we need to swap the answer//foo delete all this its just a quick test
+                if (index == kGBSearchResultNotFound) {
+                    l(@"not found!");
+                }
+                else {
+                    l(@"found");//if we got here, then swap the search hints and make sure we dont find him any more
+                }
+                
+                //as soon as we find one, do a sequential search upwards to find the first visible one and return that one as the gap (this way when we recurse back he will continue searching properly as if we didn't have to do this tricky binary search)
+
+                while (index > 0) {
+                    //get the next item up
+                    nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index-1];
+                    
+                    //if the next one is invisible? YES
+                    if (!Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {
+                        //then that means the current one is the last visible one... so return that as the gap
+                        
+                        //return him as the old gap!
+                        GBInfiniteListGap oldGap;
+                        oldGap.type = GBInfiniteListTypeOfGapExisting;
+                        oldGap.columnIdentifier = columnIndex;
+                        oldGap.itemIdentifier = nextItemUp.itemIdentifier;
+                        oldGap.indexInColumnStack = index-1;
+                        return oldGap;
+                    }
+                    
+                    //otherwise go up one more
+                    index -= 1;
+                }
+                
+            }
         }
             
         //if we got here it means no colums had any old candidates, we should see if that search rustled up some new potential new candidates
@@ -1434,7 +1483,7 @@ innerLoop:
             //else (column isnt empty, not first item, nothing is still loaded)
             else {
                 //do binary search for a visible item, top:0, bottom: lastUnloaded
-                //as soon as we find one, do a sequential search to find the last visibleone, and return that one as gap                
+                //as soon as we find one, do a sequential search downwards to find the last visibleone, and return that one as gap                
             }
         }
     }
