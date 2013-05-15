@@ -337,9 +337,9 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)scrollToPosition:(CGFloat)yPosition animated:(BOOL)shouldAnimate {
-    [self.scrollView setContentOffset:CGPointMake(0, yPosition) animated:shouldAnimate];
+    CGFloat verticalContentOffset = ThresholdCGFloat(yPosition, 0, self.scrollView.contentSize.height - self.scrollView.bounds.size.height);
     
-    [self _notifyDelegateAboutScrolling];    //foo dont call this if the UIScrolLView delegate gets sent a messag when this is done... dont wanna double call
+    [self.scrollView setContentOffset:CGPointMake(0, verticalContentOffset) animated:shouldAnimate];
 }
 
 -(BOOL)isItemOnScreen:(NSUInteger)itemIdentifier {
@@ -399,6 +399,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_notifyDelegateAboutScrolling {
+    l(@"notify");
 //    l(@"notify delegate about scrolling");
     //tell delegate about scrolling
     if ([self.delegate respondsToSelector:@selector(infiniteListView:didScrollToPosition:)]) {
@@ -1370,19 +1371,19 @@ innerLoop:
             else {
                 //do binary search for a visible item, top/low: lastUnloaded, bottom/high: count-1
                 index = [columnStack binarySearchForIndexWithLow:self.lastRecycledItemsIdentifiers[columnIndex] high:columnStack.count-1 searchLambda:^GBSearchResult(void *candidateItem) {
-                    GBInfiniteListItemMeta *nativeCandidateItem = (GBInfiniteListItemMeta *)candidateItem;
+                    GBInfiniteListItemMeta nativeCandidateItem = *(GBInfiniteListItemMeta *)candidateItem;
                     
                     //if visible: bingo
-                    if (Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nativeCandidateItem->geometry.origin, nativeCandidateItem->geometry.height)) {
+                    if (Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nativeCandidateItem.geometry.origin, nativeCandidateItem.geometry.height)) {
                         return GBSearchResultMatch;
                     }
                     //if the item is somewhere before, then we've gone too far
-                    else if (nativeCandidateItem->geometry.origin > loadedZoneTop) {
-                        return GBSearchResultLow;
+                    else if (nativeCandidateItem.geometry.origin > loadedZoneTop) {
+                        return GBSearchResultHigh;
                     }
                     //only other option is that the item is after
                     else {
-                        return GBSearchResultHigh;
+                        return GBSearchResultLow;
                     }
                 }];
 
@@ -1395,7 +1396,6 @@ innerLoop:
                 }
                 
                 //as soon as we find one, do a sequential search upwards to find the first visible one and return that one as the gap (this way when we recurse back he will continue searching properly as if we didn't have to do this tricky binary search)
-
                 while (index > 0) {
                     //get the next item up
                     nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index-1];
@@ -1482,8 +1482,46 @@ innerLoop:
             }
             //else (column isnt empty, not first item, nothing is still loaded)
             else {
-                //do binary search for a visible item, top:0, bottom: lastUnloaded
-                //as soon as we find one, do a sequential search downwards to find the last visibleone, and return that one as gap                
+                //do binary search for a visible item, top/low:0, bottom/high: lastUnloaded
+                index = [columnStack binarySearchForIndexWithLow:0 high:self.lastRecycledItemsIdentifiers[columnIndex] searchLambda:^GBSearchResult(void *candidateItem) {
+                    GBInfiniteListItemMeta nativeCandidateItem = *(GBInfiniteListItemMeta *)candidateItem;
+                    
+                    //if visible: bingo
+                    if (Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nativeCandidateItem.geometry.origin, nativeCandidateItem.geometry.height)) {
+                        return GBSearchResultMatch;
+                    }
+                    //if the item is somewhere before, then we've gone too far
+                    else if (nativeCandidateItem.geometry.origin > loadedZoneTop) {
+                        return GBSearchResultHigh;
+                    }
+                    //only other option is that the item is after
+                    else {
+                        return GBSearchResultLow;
+                    }
+                }];
+                
+                //as soon as we find one, do a sequential search downwards to find the last visibleone, and return that one as gap (this way when we recurse back he will continue searching properly as if we didn't have to do this tricky binary search)
+                NSUInteger lastIndex = columnStack.count-1;
+                while (index < lastIndex) {
+                    //get the next item down
+                    nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index+1];
+                    
+                    //if the next one is invisible? YES
+                    if (!Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {
+                        //then that means the current one is the last visible one... so return that as the gap
+                        
+                        //return him as the old gap!
+                        GBInfiniteListGap oldGap;
+                        oldGap.type = GBInfiniteListTypeOfGapExisting;
+                        oldGap.columnIdentifier = columnIndex;
+                        oldGap.itemIdentifier = nextItemUp.itemIdentifier;
+                        oldGap.indexInColumnStack = index+1;
+                        return oldGap;
+                    }
+                    
+                    //otherwise go down one more
+                    index += 1;
+                }
             }
         }
     }

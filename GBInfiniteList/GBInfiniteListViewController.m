@@ -67,7 +67,7 @@ typedef struct {
 }
 
 -(CGFloat)loadTriggerDistanceInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return 0;//foo test different one
+    return 100;//foo test different one
 }
 
 -(UIEdgeInsets)outerPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView {
@@ -89,7 +89,7 @@ typedef struct {
 }
 
 -(UIView *)viewForItem:(NSUInteger)itemIdentifier inInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    l(@"load item: %d,\n\n", itemIdentifier);
+    l(@"load item: %d", itemIdentifier);
 
     //foo update recycling API so you can give it a closure which it can use to create a new view so u always have a view, dequeueViewWithReuseIdentifier:orElseCreateWithBlock:
     
