@@ -169,7 +169,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
             
             //check if this pool is too long
             if (pool.count > maxReusableViewsPoolSize) {
-                [pool removeObjectsInRange:NSMakeRange(maxReusableViewsPoolSize, (pool.count - 1) - maxReusableViewsPoolSize)];//foo test that this does what it should
+                [pool removeObjectsInRange:NSMakeRange(maxReusableViewsPoolSize, (pool.count - 1) - maxReusableViewsPoolSize)];
             }
         }
     }
@@ -261,11 +261,13 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Public API: Data dance
 
 -(void)reset {
+    //foo has a problem, the required view width after a reset is fucked up
+    
     //scroll to top without animating
     [self scrollToTopAnimated:NO];
     
     //recycle all loaded items. just so the old delegate gets his messages
-    [self _recyclerLoopWithHint:GBInfiniteListDirectionMovedHintNone forcedRecyclingOfEverything:YES];//foo do we need/want this?
+    [self _recyclerLoopWithHint:GBInfiniteListDirectionMovedHintNone forcedRecyclingOfEverything:YES];
     
     //restart data dance
     [self _stopDataDance];
@@ -288,7 +290,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
         }
         
         //restart our loop
-        [self _iterateWithHint:GBInfiniteListDirectionMovedHintDown recyclerEnabled:NO];//foo was yes before
+        [self _iterateWithHint:GBInfiniteListDirectionMovedHintDown recyclerEnabled:NO];
     }
     //check that it was expecting this message? NO
     else {
@@ -473,11 +475,11 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     self.columnStacks = nil;
     if (self.columnStacksLoadedItemBoundaryIndices != NULL) {
         free(self.columnStacksLoadedItemBoundaryIndices);
-        self.columnStacksLoadedItemBoundaryIndices = NULL;//foo do we need this? or is it automatically nulled after the free
+        self.columnStacksLoadedItemBoundaryIndices = NULL;
     }
     if (self.lastRecycledItemsIdentifiers != NULL) {
         free(self.lastRecycledItemsIdentifiers);
-        self.lastRecycledItemsIdentifiers = NULL;//foo do we need this? or is it automatically nulled after the free
+        self.lastRecycledItemsIdentifiers = NULL;
     }
     
     self.recycledViewsPool = nil;
@@ -530,7 +532,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     [self _handleHeaderViewAndConfigureListOrigin];
     
     //kick it all off
-    [self _iterateWithHint:GBInfiniteListDirectionMovedHintNone recyclerEnabled:YES];//foo might be able to change this to down, but this is safer for now. //foo can change to NO but wanna make sure i test all cases during dev
+    [self _iterateWithHint:GBInfiniteListDirectionMovedHintNone recyclerEnabled:YES];
 }
 
 -(void)_stopDataDance {
@@ -1302,7 +1304,7 @@ innerLoop:
             //else is something still loaded? (! indicesUndefined)
             else if (!IsGBInfiniteListColumnBoundariesUndefined(columnBoundaries)) {
                 //start at bottom, enumerate downwards sequentially
-                for (index = lastLoadedIndex; YES; index++) {//foo maybe not a good idea to have an unbounded loop
+                for (index = lastLoadedIndex; YES; index++) {
                     //find the item first
                     nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
                     
@@ -1314,8 +1316,6 @@ innerLoop:
                     else {
                         //is item last one? index == count-1
                         if (index == columnStack.count-1) {
-                            //foo im not all too sure about this business here
-                            
                             //we need to calculate the length of the column first
                             GBInfiniteListItemMeta lastItemInColumn = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
                             currentColumnLength = lastItemInColumn.geometry.origin + lastItemInColumn.geometry.height;
@@ -1429,7 +1429,7 @@ innerLoop:
             //else if something is still loaded? (! indicesUndefined)
             else if (!IsGBInfiniteListColumnBoundariesUndefined(columnBoundaries)) {
                 //start at top, enumerate upwards sequentially
-                for (index = firstLoadedIndex; index>=0; index--) {//foo maybe can have an unbounded loop here and save some time on the checks
+                for (index = firstLoadedIndex; index>=0; index--) {
                     //find the item first
                     nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
                     
@@ -1506,124 +1506,6 @@ innerLoop:
     noGap.type = GBInfiniteListTypeOfGapNone;
     return noGap;
 }
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-    
-    
-    
-//    /* Search for gap at top */
-//    
-//    GBFastArray *columnStack;
-//    GBInfiniteListColumnBoundaries columnBoundaries;
-//    //try each column one by one
-//    for (int columnIndex=0; columnIndex<self.numberOfColumns; columnIndex++) {
-//        columnStack = self.columnStacks[columnIndex];
-//        columnBoundaries = self.columnStacksLoadedItemBoundaryIndices[columnIndex];
-//        
-//        //prepare for checking the gap
-//        GBInfiniteListItemMeta nextItemUp;
-//        NSInteger index = columnBoundaries.firstLoadedIndex;
-//        
-//        //check if column is empty
-//        if (index == GBColumnIndexUndefined) {
-//            //column is empty so there can't be any gap above it
-//            continue;
-//        }
-//        //check to see if its the first item, if so there can't be any gap above it
-//        else if (index == 0) {
-//            //don't need to search up this column any more
-//            continue;
-//        }
-//        //check to see if the first item covers the top edge of the screen, and only if he doesnt should we start our search. If he does, we don't need to look further
-//        else if ((*(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index]).geometry.origin <= loadedZoneTop) {
-//            //don't need to search up this column any more
-//            continue;
-//        }
-//        else {
-//            //move past the first current element and see if the next one is our target, in most cases it will be, but if the user scrolled really fast and skipped some, then we might have to continue looking, that's why there's a loop
-//            index--;
-//            
-//            //go up until you find the first item that's visible
-//            while (index >= 0) {
-//                nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
-//                
-//                //check if item is visible
-//                if (Lines1DOverlap(loadedZoneTop, loadedZoneHeight, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {//foo was negated
-//                    GBInfiniteListGap newTopGap;
-//                    
-//                    newTopGap.type = GBInfiniteListTypeOfGapTop;
-//                    newTopGap.columnIdentifier = columnIndex;
-//                    newTopGap.itemIdentifier = nextItemUp.itemIdentifier;
-//                    newTopGap.indexInColumnStack = index;
-//                    
-//                    return newTopGap;
-//                }
-//                
-//                //if we didnt find one and got here... try again
-//                index--;
-//            }
-//        }
-//    }
-//    
-//    
-//    /* Search for gap at bottom */
-//    
-//    
-//    //find shortest column -> check if it's onscreen -> if not return a newGap with itemID as last+1
-//    //this code is different because we can't skip items, and we must pick the shortest one first
-//    
-//    //calculate the shortest column and that column's length
-//    NSUInteger runningShortestColumnIndex = 0;
-//    CGFloat runningShortestColumnLength = CGFLOAT_MAX;
-//    CGFloat currentColumnLength;
-////    GBInfiniteListItemMeta runningShortestItem;
-//    
-//    GBInfiniteListItemMeta lastItemInColumn;
-//    for (int columnIndex=0; columnIndex<self.numberOfColumns; columnIndex++) {
-//        columnStack = self.columnStacks[columnIndex];
-//        columnBoundaries = self.columnStacksLoadedItemBoundaryIndices[columnIndex];
-//        
-//        //if the index is undefined, then this is a column that is as short as it gets. and since we search left to right, if it has multiple empty columns, it will return the leftmost one first. if this is the case, skip all the rest because it cant get shorter.
-//        if (columnBoundaries.lastLoadedIndex == GBColumnIndexUndefined) {
-//            runningShortestColumnIndex = columnIndex;
-//            runningShortestColumnLength = 0;
-//
-//            //don't search any more
-//            break;
-//        }
-//        //otherwise continue looking for the shortest one
-//        else {
-//            //we need to calculate the length of the column first
-//            lastItemInColumn = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:columnBoundaries.lastLoadedIndex];
-//            currentColumnLength = lastItemInColumn.geometry.origin + lastItemInColumn.geometry.height;
-//            
-//            //then check if its shorter or not than what we currently think is the shortest
-//            if (currentColumnLength < runningShortestColumnLength) {
-//                runningShortestColumnIndex = columnIndex;
-//                runningShortestColumnLength = currentColumnLength;
-//            }
-//        }
-//    }
-//    
-//    //check if the item leaves a gap
-//    if (runningShortestColumnLength < loadedZoneTop + loadedZoneHeight) {
-//        //if it does, return this gap
-//        GBInfiniteListGap newBottomGap;
-//        
-//        newBottomGap.type = GBInfiniteListTypeOfGapBottom;
-//        newBottomGap.columnIdentifier = runningShortestColumnIndex;
-//        
-//        return newBottomGap;
-//    }
-//    
-//    
-//    /* No gap */
-//    
-//    //if we're here then theres no gap
-//    GBInfiniteListGap noGap;
-//    noGap.type = GBInfiniteListTypeOfGapNone;
-//    return noGap;
 
 @end
 

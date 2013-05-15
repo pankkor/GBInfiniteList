@@ -61,6 +61,7 @@ typedef struct {
     
     ExecuteAfter(3, ^{
         l(@"go");
+        [self.infiniteListView reset];
     });
 }
 
