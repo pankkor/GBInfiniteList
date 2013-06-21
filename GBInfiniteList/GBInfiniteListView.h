@@ -41,7 +41,7 @@ extern NSString * const GBSizeMismatchException;
 //reset (removes everything, cleans up memory and scrolls to top with no animation)
 -(void)reset;
 
-//Hides the loading thing and requests the next item
+//Let's us know that you've loaded some more items and that we can ask you for them now
 -(void)didFinishLoadingMoreItems;
 
 //Lets you recycle views which have gone off screen rather than creating and destroying them all the time
@@ -59,10 +59,10 @@ extern NSString * const GBSizeMismatchException;
 -(void)scrollToPosition:(CGFloat)yPosition animated:(BOOL)shouldAnimate;
 
 //Lets you check if item is on screen?
--(BOOL)isItemOnScreen:(NSUInteger)itemIdentifier;
+-(BOOL)isItemVisible:(NSUInteger)itemIdentifier;
 
 //Lets you get an array of all the currently displayed items.
--(NSDictionary *)itemsCurrentlyOnScreen;
+-(NSDictionary *)visibleItems;
 
 #pragma mark - Caching
 

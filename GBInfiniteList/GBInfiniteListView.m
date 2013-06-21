@@ -66,7 +66,7 @@ static CGFloat const kDefaultLoadingViewTopMargin =                             
 static CGFloat const kDefaultHeaderViewBottomMargin =                                   0;
 static UIEdgeInsets const kPaddingForDefaultSpinner =                                   (UIEdgeInsets){4, 0, 4, 0};
 
-static NSUInteger const kDefaultRecyclableViewsPoolSize =                               10;
+static NSUInteger const kDefaultRecyclableViewsPoolSize =                               20;
 
 static NSUInteger const GBColumnIndexUndefined =                                        NSUIntegerMax;
 static GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesUndefined =   {GBColumnIndexUndefined, GBColumnIndexUndefined};
@@ -350,9 +350,9 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     [self.scrollView setContentOffset:CGPointMake(0, verticalContentOffset) animated:shouldAnimate];
 }
 
--(BOOL)isItemOnScreen:(NSUInteger)itemIdentifier {
+-(BOOL)isItemVisible:(NSUInteger)itemIdentifier {
     NSNumber *itemNumber = @(itemIdentifier);
-    for (NSNumber *key in self.itemsCurrentlyOnScreen) {
+    for (NSNumber *key in self.visibleItems) {
         //found one!
         if ([key isEqualToNumber:itemNumber]) {
             return YES;
@@ -363,7 +363,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     return NO;
 }
 
--(NSDictionary *)itemsCurrentlyOnScreen {
+-(NSDictionary *)visibleItems {
     return [self.loadedViews copy];
 }
 
