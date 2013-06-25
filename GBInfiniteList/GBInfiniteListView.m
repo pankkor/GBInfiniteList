@@ -6,9 +6,6 @@
 //  Copyright (c) 2013 Goonbee. All rights reserved.
 //
 
-
-//foo add a way to detect when views are tapped, need to handle the touches myself assuming they come through to my layer
-
 #import "GBInfiniteListView.h"
 
 #import "UIView+GBInfiniteList.h"
@@ -137,6 +134,9 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 
 //For keeping track of the last scrolled position
 @property (assign, nonatomic) CGFloat                               lastScrollViewPosition;
+
+//For detecting taps
+@property (strong, nonatomic) UITapGestureRecognizer                *tapGestureRecognizer;
 
 @end
 
@@ -423,6 +423,9 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 
 -(void)_initialiseDataStructures {
     //init data structures n co.
+    self.tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTap:)];
+    [self addGestureRecognizer:self.tapGestureRecognizer];
+    
     self.scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
     self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
     self.scrollView.opaque = NO;
@@ -496,6 +499,71 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     self.noItemsView = nil;
     [self.loadingView removeFromSuperview];
     self.loadingView = nil;
+}
+
+#pragma mark - Private API: Tapping {
+
+-(void)didTap:(UITapGestureRecognizer *)tapGestureRecognizer {
+    if (tapGestureRecognizer.state == UIGestureRecognizerStateEnded) {
+        CGPoint tapLocation = [tapGestureRecognizer locationInView:self.scrollView];
+        CGFloat x = tapLocation.x;
+        CGFloat y = tapLocation.y;
+    
+        //find column in which the tap occurred
+        NSUInteger columnIndex;
+        BOOL insideColumn = false;
+        for (NSUInteger i=0; i<self.numberOfColumns; i++) {
+            
+            CGFloat columnLeftEdge = self.outerPadding.left + i * (self.requiredViewWidth + self.horizontalColumnMargin);
+            CGFloat columnRightEdge = columnLeftEdge + self.requiredViewWidth;
+            
+            
+            if (x >= columnLeftEdge && x <= columnRightEdge) {
+                columnIndex = i;
+                insideColumn = YES;
+                break;
+            }
+        }
+        
+        //bail if it's in no column
+        if (!insideColumn) return;
+        
+        GBFastArray *columnStack = self.columnStacks[columnIndex];
+        NSUInteger firstLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex;
+        NSUInteger lastLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;
+
+        //bail if undefined
+        if (IsGBInfiniteListColumnBoundariesUndefined(self.columnStacksLoadedItemBoundaryIndices[columnIndex])) return;
+        
+        //do binary search for the item that matches, top/low: lastUnloaded, bottom/high: count-1
+        __block GBInfiniteListItemMeta nativeCandidateItem;
+        NSUInteger itemIndex = [columnStack binarySearchForIndexWithLow:firstLoadedIndex high:lastLoadedIndex searchLambda:^GBSearchResult(void *candidateItem) {
+            nativeCandidateItem = *(GBInfiniteListItemMeta *)candidateItem;
+            GBInfiniteListItemGeometry geometry = nativeCandidateItem.geometry;
+            
+            //if visible: bingo
+            if (y >= geometry.origin && y<= (geometry.origin + geometry.height)) {
+                return GBSearchResultMatch;
+            }
+            //if the item is somewhere before, then we've gone too far
+            else if (y < geometry.origin) {
+                return GBSearchResultHigh;
+            }
+            //otherwise we're too low
+            else {
+                return GBSearchResultLow;
+            }
+        }];
+        
+        //bail if we haven't found one
+        if (itemIndex == kGBSearchResultNotFound) return;
+        
+        //we found one, tell delegate
+        UIView *view = self.loadedViews[@(nativeCandidateItem.itemIdentifier)];
+        if ([self.delegate respondsToSelector:@selector(infiniteListView:didTapOnView:correspondingToItem:)]) {
+            [self.delegate infiniteListView:self didTapOnView:view correspondingToItem:nativeCandidateItem.itemIdentifier];
+        }
+    }
 }
 
 #pragma mark - Private API: Data dance state management
@@ -931,7 +999,7 @@ innerLoop:
     nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
     
     //if view is visible
-    if (Lines1DOverlap(loadedZoneTop, loadedZoneHeight + self.verticalItemMargin, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {//need to add the verticalItemMargin because items are loaded as soon edge of the prebious item is exceeded, so they can be placed offscreen if the scroll distance is less than the margin
+    if (Lines1DOverlap(loadedZoneTop, loadedZoneHeight + self.verticalItemMargin, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {//need to add the verticalItemMargin because items are loaded as soon edge of the previous item is exceeded, so they can be placed offscreen if the scroll distance is less than the margin
         //done with this column, exit this loop
         if (loopNumber == 1) { goto exit1; } else  { goto exit2; }
     }
