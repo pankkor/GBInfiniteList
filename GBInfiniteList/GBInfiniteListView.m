@@ -145,6 +145,11 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 
 #pragma mark - Custom accessors: side effects
 
+-(CGFloat)totalHeight {
+    //it's safe to just return the contentSize, and ignore the insets etc. because we handle the header internally and all content is always just drawn straight into the scrollview
+    return self.scrollView.contentSize.height;
+}
+
 -(void)setDataSource:(id<GBInfiniteListViewDataSource>)dataSource {
     _dataSource = dataSource;
     

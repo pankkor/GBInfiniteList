@@ -24,6 +24,9 @@ extern NSString * const GBSizeMismatchException;
 @property (weak, nonatomic) id<GBInfiniteListViewDataSource>        dataSource;
 @property (weak, nonatomic) id<GBInfiniteListViewDelegate>          delegate;
 
+//Returns the total height of the content, including the header and footer views
+@property (assign, nonatomic, readonly) CGFloat                     totalHeight;
+
 //Returns 0 if the Geometry dataSource methods haven't been called yet
 @property (assign, nonatomic, readonly) CGFloat                     requiredViewWidth;
 
