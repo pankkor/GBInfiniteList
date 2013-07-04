@@ -266,8 +266,6 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Public API: Data dance
 
 -(void)reset {
-    //foo has a problem, the required view width after a reset is fucked up
-    
     //scroll to top without animating
     [self scrollToTopAnimated:NO];
     
@@ -276,7 +274,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     
     //restart data dance
     [self _stopDataDance];
-    [self _startDataDance];
+    [self _manageDataDanceState];
 }
 
 -(void)didFinishLoadingMoreItems {
@@ -419,9 +417,6 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Private API: Memory
 
 -(void)_initialisationRoutine {
-    //Create the necessary data structures etc.
-    [self _initialiseDataStructures];
-    
     //Set state
     self.isInitialised = YES;
 }
@@ -592,6 +587,9 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     //just remember it
     self.isDataDanceActive = YES;
 
+    //initialise data structures
+    [self _initialiseDataStructures];
+    
     //set the size of the scrollView to match the infiniteListView frame
     [self _finaliseScrollViewSize];
 
