@@ -77,7 +77,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 
-@interface GBInfiniteListView () {
+@interface GBInfiniteListView () <UIGestureRecognizerDelegate> {
     UIView                                                          *_defaultLoadingView;
 }
 
@@ -414,6 +414,20 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     }
 }
 
+#pragma mark - UITapGestureRecognizerDelegate
+
+//we want to pass touches through to these other views in case they have controls on them
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
+    if (self.headerView.superview) {
+        if ([touch.view isDescendantOfView:self.self.headerView] ||
+            [touch.view isDescendantOfView:self.self.noItemsView] ||
+            [touch.view isDescendantOfView:self.self.loadingView]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 #pragma mark - Private API: Memory
 
 -(void)_initialisationRoutine {
@@ -424,7 +438,8 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 -(void)_initialiseDataStructures {
     //init data structures n co.
     self.tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTap:)];
-    [self addGestureRecognizer:self.tapGestureRecognizer];
+    self.tapGestureRecognizer.delegate = self;
+    self.gestureRecognizers = @[self.tapGestureRecognizer];
     
     self.scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
     self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
