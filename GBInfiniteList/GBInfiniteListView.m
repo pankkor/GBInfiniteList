@@ -377,7 +377,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 
 #pragma mark - Caching
 
--(void)flushReusableViewsPool {
+-(void)flushReusableViewsPool {    
     //simply replaces the pool with a new one, which causes the old one to trickle down releases and release everything held in it
     self.recycledViewsPool = [NSMutableDictionary new];
 }
@@ -1102,7 +1102,7 @@ innerLoop:
         if ([oldView.reuseIdentifier isKindOfClass:[NSString class]]) {
             //make sure we have a pool for that reuseIdentifier
             if (!self.recycledViewsPool[oldView.reuseIdentifier]) {
-                self.recycledViewsPool[oldView.reuseIdentifier] = [[NSMutableArray alloc] init];
+                self.recycledViewsPool[oldView.reuseIdentifier] = [NSMutableArray new];
             }
             
             //capacity check for pool, see if there is still space left
