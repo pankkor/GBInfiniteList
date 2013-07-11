@@ -335,7 +335,14 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     }
     //otherwise return a new one
     else {
-        return block();
+        //create it by inverting control
+        UIView *newView = block();
+
+        //set its reuseIdentfier
+        newView.reuseIdentifier = reuseIdentifier;
+        
+        //return it
+        return newView;
     }
 }
 
