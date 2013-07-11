@@ -63,7 +63,7 @@ static CGFloat const kDefaultLoadingViewTopMargin =                             
 static CGFloat const kDefaultHeaderViewBottomMargin =                                   0;
 static UIEdgeInsets const kPaddingForDefaultSpinner =                                   (UIEdgeInsets){4, 0, 4, 0};
 
-static NSUInteger const kDefaultRecyclableViewsPoolSize =                               20;
+static NSUInteger const kDefaultRecyclableViewsPoolSize =                               28;
 
 static NSUInteger const GBColumnIndexUndefined =                                        NSUIntegerMax;
 static GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesUndefined =   {GBColumnIndexUndefined, GBColumnIndexUndefined};
