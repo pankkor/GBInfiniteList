@@ -1381,7 +1381,7 @@ innerLoop:
             //prepare
             columnStack = self.columnStacks[columnIndex];
             columnBoundaries = self.columnStacksLoadedItemBoundaryIndices[columnIndex];
-            firstLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex;
+//            firstLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex;//removed at behest of Clang analyzer
             lastLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;
             
             //is column empty?
@@ -1505,7 +1505,7 @@ innerLoop:
             columnStack = self.columnStacks[columnIndex];
             columnBoundaries = self.columnStacksLoadedItemBoundaryIndices[columnIndex];
             firstLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex;
-            lastLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;
+//            lastLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;//removed at behest of Clang analyzer
             
             //is column empty?
             if (columnStack.isEmpty) {
