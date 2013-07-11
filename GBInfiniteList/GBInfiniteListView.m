@@ -302,10 +302,10 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     }
 }
 
--(UIView *)dequeueReusableViewWithIdentifier:(NSString *)viewIdentifier {
+-(UIView *)dequeueReusableViewWithIdentifier:(NSString *)reuseIdentifier {
     NSMutableArray *pool;
     //check if we have a pool for that? YES
-    if ((pool = self.recycledViewsPool[viewIdentifier])) {
+    if ((pool = self.recycledViewsPool[reuseIdentifier])) {
         //make sure we have a view in there
         if (pool.count > 0) {
             //get a pointer to the view
@@ -323,13 +323,11 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     return nil;
 }
 
--(UIView *)dequeueReusableViewWithIdentifier:(NSString *)viewIdentifier elseCreateWithBlock:(UIView *(^)(void))block {
+-(UIView *)dequeueReusableViewWithIdentifier:(NSString *)reuseIdentifier elseCreateWithBlock:(UIView *(^)(void))block {
     //if the block is nil, raise an exception
-    if (!block) {
-        @throw [NSException exceptionWithName:GBBadParameterException reason:@"block was nil" userInfo:nil];
-    }
+    if (!block) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"block was nil" userInfo:nil];
     
-    UIView *dequeuedView = [self dequeueReusableViewWithIdentifier:viewIdentifier];
+    UIView *dequeuedView = [self dequeueReusableViewWithIdentifier:reuseIdentifier];
     
     //if its non-nil return it
     if (dequeuedView) {

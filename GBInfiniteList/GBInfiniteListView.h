@@ -47,11 +47,11 @@ extern NSString * const GBSizeMismatchException;
 //Let's us know that you've loaded some more items and that we can ask you for them now
 -(void)didFinishLoadingMoreItems;
 
-//Lets you recycle views which have gone off screen rather than creating and destroying them all the time
--(UIView *)dequeueReusableViewWithIdentifier:(NSString *)viewIdentifier;
+//Lets you recycle views which have gone off screen rather than creating and destroying them all the time. If you use this, make sure to set the view's reuseIdentifier property to something, otherwise they won't get recycled
+-(UIView *)dequeueReusableViewWithIdentifier:(NSString *)reuseIdentifier;
 
-//Same as above but you can use a block to more conveniently alloc views, keeps your client code cleaner as you don't need if checks
--(UIView *)dequeueReusableViewWithIdentifier:(NSString *)viewIdentifier elseCreateWithBlock:(UIView *(^)(void))block;
+//Same as above but you can use a block to more conveniently alloc views, keeps your client code cleaner as you don't need if checks and don't need to worry about assigning reuseIdentifier
+-(UIView *)dequeueReusableViewWithIdentifier:(NSString *)reuseIdentifier elseCreateWithBlock:(UIView *(^)(void))block;
 
 #pragma mark - Scrolling & Co.
 
