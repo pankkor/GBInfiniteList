@@ -135,6 +135,13 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 //For keeping track of the last scrolled position
 @property (assign, nonatomic) CGFloat                               lastScrollViewPosition;
 
+//For keeping track of the last dragged position
+@property (assign, nonatomic) CGPoint                               lastIncrementalDraggingPosition;
+@property (assign, nonatomic) CGPoint                               lastInitialDraggingPosition;
+
+//For keeping track of when the user is dragging (because the UIScrollView isDragging property doesn't seem to work)
+@property (assign, nonatomic) BOOL                                  isUserDragging;
+
 //For detecting taps
 @property (strong, nonatomic) UITapGestureRecognizer                *tapGestureRecognizer;
 
@@ -384,6 +391,21 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 
 #pragma mark - UIScrollViewDelegate
 
+-(void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
+    self.isUserDragging = YES;
+    self.lastIncrementalDraggingPosition = self.scrollView.contentOffset;
+    self.lastInitialDraggingPosition = self.scrollView.contentOffset;
+}
+
+-(void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset {
+    self.isUserDragging = NO;
+    
+    CGPoint oldOffset = self.lastInitialDraggingPosition;
+    CGPoint newOffset = *targetContentOffset;
+    
+    [self _notifyDelegateAboutEndedDraggingFrom:oldOffset to:newOffset velocity:velocity];
+}
+
 -(void)scrollViewDidScroll:(UIScrollView *)scrollView {
     [self _didMoveViewport];
 }
@@ -405,17 +427,45 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     //iterate
     [self _iterateWithHint:directionHint recyclerEnabled:YES];
     
-    //remember the current position
-    self.lastScrollViewPosition = self.scrollView.contentOffset.y;
+    //offsets
+    CGFloat oldOffset = self.lastScrollViewPosition;
+    CGFloat newOffset = self.scrollView.contentOffset.y;
     
-    //tell delegate
-    [self _notifyDelegateAboutScrolling];
+    //remember the current position
+    self.lastScrollViewPosition = newOffset;
+    
+    if (self.isUserDragging) {
+        //dragging
+        CGPoint oldDraggingOffset = self.lastIncrementalDraggingPosition;
+        CGPoint newDraggingOffset = self.scrollView.contentOffset;
+        
+        //remember the drag position
+        self.lastIncrementalDraggingPosition = newDraggingOffset;
+        
+        //tell delegate about incremental dragging
+        [self _notifyDelegateAboutContinuousDraggingFrom:oldDraggingOffset to:newDraggingOffset];
+    }
+    
+    //tell delegate about scrolling
+    [self _notifyDelegateAboutScrollingFrom:oldOffset to:newOffset];
 }
 
--(void)_notifyDelegateAboutScrolling {
+-(void)_notifyDelegateAboutEndedDraggingFrom:(CGPoint)oldOffset to:(CGPoint)newOffset velocity:(CGPoint)velocity {
+    if ([self.delegate respondsToSelector:@selector(infiniteListView:didEndDraggingFromPosition:toPosition:withVelocity:)]) {
+        [self.delegate infiniteListView:self didEndDraggingFromPosition:oldOffset toPosition:newOffset withVelocity:velocity];
+    }
+}
+
+-(void)_notifyDelegateAboutContinuousDraggingFrom:(CGPoint)oldOffset to:(CGPoint)newOffset {
+    if ([self.delegate respondsToSelector:@selector(infiniteListView:didDragFromPosition:toPosition:)]) {
+        [self.delegate infiniteListView:self didDragFromPosition:oldOffset toPosition:newOffset];
+    }
+}
+
+-(void)_notifyDelegateAboutScrollingFrom:(CGFloat)oldOffset to:(CGFloat)newOffset {
     //tell delegate about scrolling
-    if ([self.delegate respondsToSelector:@selector(infiniteListView:didScrollToPosition:)]) {
-        [self.delegate infiniteListView:self didScrollToPosition:self.scrollView.contentOffset.y];
+    if ([self.delegate respondsToSelector:@selector(infiniteListView:didScrollFromPosition:toPosition:)]) {
+        [self.delegate infiniteListView:self didScrollFromPosition:oldOffset toPosition:newOffset];
     }
 }
 

@@ -154,8 +154,14 @@ extern NSString * const GBSizeMismatchException;
 //Sent when the user taps on a particular view... unless the view handles the touches itself
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView didTapOnView:(UIView *)view correspondingToItem:(NSUInteger)itemIdentifier;
 
-//Sent when it scrolls. Measured as total offset of scrollable region (including header view, not including loading view)
--(void)infiniteListView:(GBInfiniteListView *)infiniteListView didScrollToPosition:(CGFloat)offset;
+//Sent when it scrolls. Measured as total offset of scrollable region (including header view, not including loading view). This will include all states: swiping, accelerating, decellerating, etc. including bounces.
+-(void)infiniteListView:(GBInfiniteListView *)infiniteListView didScrollFromPosition:(CGFloat)oldOffset toPosition:(CGFloat)newOffset;
+
+//Sent when the user performs a swipe/scroll gesture on the infinite list view.
+-(void)infiniteListView:(GBInfiniteListView *)infiniteListView didDragFromPosition:(CGPoint)oldOffset toPosition:(CGPoint)newOffset;
+
+//Sent when the user ends dragging
+-(void)infiniteListView:(GBInfiniteListView *)infiniteListView didEndDraggingFromPosition:(CGPoint)oldOffset toPosition:(CGPoint)newOffset withVelocity:(CGPoint)velocity;
 
 //Sent when the list of visible on screen items changes. (Only when it changes, so this doesn't get sent for every scroll, if you want that use infiniteListView:scrolledToPosition: and inside it call the itemsCurrentlyOnScreen method)
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView listOfVisibleItemsChanged:(NSArray *)itemIdentifiers;
