@@ -117,6 +117,9 @@ extern NSString * const GBSizeMismatchException;
 
 @optional
 
+//Lets you know that a view is about to be recycled. If you are loading images or some other asynchronous operation, one whose callback will reference this view, then this is when you should cancel it.
+-(void)infiniteListView:(GBInfiniteListView *)infiniteListView willRecycleView:(UIView *)view usedByItem:(NSUInteger)itemIdentifier;
+
 //Lets you know that a particular view was recycled and it's not showing the previous item any more... in case you were loading stuff async and just put a placeholder image for a particular item. After this point you should release the pointer you had to the view which you were hoping to update once your async load finished. It's a good idea to cache the result once your load finished in case the user scrolls back up, but don't update the view until asked to do so!
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView didRecycleView:(UIView *)view lastUsedByItem:(NSUInteger)itemIdentifier;
 

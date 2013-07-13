@@ -1113,6 +1113,14 @@ innerLoop:
     NSNumber *key = @(itemMeta.itemIdentifier);
     UIView *oldView = self.loadedViews[key];
     
+    //check to make sure the view is actually loaded before we try to re-unload it and confuse our delegate
+    if ([self.loadedViews objectForKey:key]) {
+        //tell our delegate that we are about to recycled the view
+        if ([self.dataSource respondsToSelector:@selector(infiniteListView:willRecycleView:usedByItem:)]) {
+            [self.dataSource infiniteListView:self willRecycleView:oldView usedByItem:itemMeta.itemIdentifier];
+        }
+    }
+    
     //if there are at least 2 items loaded: i.e. last-first>=1
     if (columnBoundaries.lastLoadedIndex - columnBoundaries.firstLoadedIndex >= 1) {
         //if the view was on the front
