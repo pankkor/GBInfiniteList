@@ -791,8 +791,14 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
             //apply the new size
             noItemsView.frame = newFrame;
             
+            //center it
+            noItemsView.center = CGPointMake(self.center.x, self.center.y + self.noItemsViewVerticalOffset);
+            
+            //configure it to stay there
+            noItemsView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+            
             //draw the view
-            [self.scrollView addSubview:noItemsView];
+            [self addSubview:noItemsView];
             
             //keep a pointer to the empty view
             self.noItemsView = noItemsView;

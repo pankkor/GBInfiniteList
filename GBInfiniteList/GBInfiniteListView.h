@@ -33,6 +33,9 @@ extern NSString * const GBSizeMismatchException;
 //Lets you set the pool size for the recyclable views, it will only ever retain up to the max you set here, any additional ones are immediately released. Each reuseIdentifier has its own pool
 @property (assign, nonatomic) NSUInteger                            maxReusableViewsPoolSize;
 
+//Lets you reposition the no items view vertically
+@property (assign, nonatomic) CGFloat                               noItemsViewVerticalOffset;
+
 #pragma mark - Designated initialiser
 
 //Designated initialiser. If the frame changes, the actual list(which is a subview of this object) is just centered. You have to call reset to be given the chance to supply new paddings, column count, etc.
