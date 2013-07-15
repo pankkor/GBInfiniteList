@@ -473,14 +473,14 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 
 //we want to pass touches through to these other views in case they have controls on them
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
-    if (self.headerView.superview) {
-        if ([touch.view isDescendantOfView:self.self.headerView] ||
-            [touch.view isDescendantOfView:self.self.noItemsView] ||
-            [touch.view isDescendantOfView:self.self.loadingView]) {
-            return NO;
-        }
+    if ((self.headerView.superview && [touch.view isDescendantOfView:self.headerView]) ||
+        (self.noItemsView.superview && [touch.view isDescendantOfView:self.noItemsView]) ||
+        (self.loadingView.superview && [touch.view isDescendantOfView:self.loadingView])) {
+        return NO;
     }
-    return YES;
+    else {
+        return YES;
+    }
 }
 
 #pragma mark - Private API: Memory
