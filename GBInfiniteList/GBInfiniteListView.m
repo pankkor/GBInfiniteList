@@ -90,7 +90,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 @property (strong, nonatomic, readonly) UIView                      *defaultLoadingView;
 
 //Scrollview where to put all the stuff on
-@property (strong, nonatomic) UIScrollView                          *scrollView;
+@property (strong, nonatomic, readwrite) UIScrollView               *scrollView;
 
 //To know when to kick off the data dance. Data dance is kicked off as soon as view is visible, init has been called, and datasource has been set. if any of these changes, the data dance stops
 @property (assign, nonatomic) BOOL                                  isInitialised;
@@ -273,6 +273,9 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Public API: Data dance
 
 -(void)reset {
+    //make sure they don't sent a draggin message
+    self.isUserDragging = NO;
+    
     //scroll to top without animating
     [self scrollToTopAnimated:NO];
     

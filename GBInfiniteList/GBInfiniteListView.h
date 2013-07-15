@@ -36,6 +36,9 @@ extern NSString * const GBSizeMismatchException;
 //Lets you reposition the no items view vertically
 @property (assign, nonatomic) CGFloat                               noItemsViewVerticalOffset;
 
+//Be careful when messing with this! The only thing that's safe to do is add some subviews
+@property (strong, nonatomic, readonly) UIScrollView                *scrollView;
+
 #pragma mark - Designated initialiser
 
 //Designated initialiser. If the frame changes, the actual list(which is a subview of this object) is just centered. You have to call reset to be given the chance to supply new paddings, column count, etc.
