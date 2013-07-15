@@ -301,6 +301,8 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
         
         //restart our loop
         [self _iterateWithHint:GBInfiniteListDirectionMovedHintDown recyclerEnabled:NO];
+        
+        [self _handleNoItemsView];
     }
     //check that it was expecting this message? NO
     else {
@@ -1002,7 +1004,6 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     if (self.isDataDanceActive) {
         if (shouldRecycle) [self _recyclerLoopWithHint:directionMovedHint forcedRecyclingOfEverything:NO];
         [self _drawAndLoadLoopWithHint:directionMovedHint];
-        [self _handleNoItemsView];
     }
 }
 
