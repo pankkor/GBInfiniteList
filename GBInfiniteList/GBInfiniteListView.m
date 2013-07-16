@@ -276,14 +276,16 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     //make sure they don't sent a draggin message
     self.isUserDragging = NO;
     
-    //scroll to top without animating
-    [self scrollToTopAnimated:NO];
-    
     //recycle all loaded items. just so the old delegate gets his messages
     [self _recyclerLoopWithHint:GBInfiniteListDirectionMovedHintNone forcedRecyclingOfEverything:YES];
     
-    //restart data dance
+    //stop data dance
     [self _stopDataDance];
+    
+    //scroll to top without animating
+    [self scrollToTopAnimated:NO];
+    
+    //start data dance
     [self _manageDataDanceState];
 }
 
@@ -496,6 +498,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_initialiseDataStructures {
+    l(@"initialise");
     //init data structures n co.
     self.tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(didTap:)];
     self.tapGestureRecognizer.delegate = self;
@@ -532,6 +535,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_initialiseColumnCountDependentDataStructures {
+    l(@"initialise column");
     //last recycled items identifiers
     self.lastRecycledItemsIdentifiers = malloc(sizeof(NSInteger) * self.numberOfColumns);
     
