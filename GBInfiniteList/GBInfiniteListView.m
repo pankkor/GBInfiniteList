@@ -510,6 +510,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     self.scrollView.backgroundColor = [UIColor clearColor];
     self.scrollView.delegate = self;
     self.scrollView.scrollEnabled = YES;
+    self.scrollView.alwaysBounceVertical = YES;
     self.recycledViewsPool = [NSMutableDictionary new];
     self.loadedViews = [NSMutableDictionary new];
     self.hasRequestedMoreItems = NO;
