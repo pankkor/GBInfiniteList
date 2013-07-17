@@ -782,7 +782,6 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_handleNoItemsView {
-    l(@"no items view");//foo kill
     //check if all columns have undefined indices
     BOOL isEmpty = YES;
     for (int columnIndex=0; columnIndex<self.numberOfColumns; columnIndex++) {
