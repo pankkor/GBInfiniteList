@@ -1281,6 +1281,9 @@ innerLoop:
                     if ([self.delegate respondsToSelector:@selector(infiniteListViewNoMoreItemsAvailable:)]) {
                         [self.delegate infiniteListViewNoMoreItemsAvailable:self];
                     }
+                    
+                    //handle the empty view
+                    [self _handleNoItemsView];
                     //we're done
                 }
             }
