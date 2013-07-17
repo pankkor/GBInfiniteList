@@ -782,6 +782,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_handleNoItemsView {
+    l(@"no items view");//foo kill
     //check if all columns have undefined indices
     BOOL isEmpty = YES;
     for (int columnIndex=0; columnIndex<self.numberOfColumns; columnIndex++) {
@@ -823,8 +824,24 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
             //keep a pointer to the empty view
             self.noItemsView = noItemsView;
             
+            //get margin for header
+            CGFloat marginForHeader;
+            if ([self.dataSource respondsToSelector:@selector(marginForHeaderViewInInfiniteListView:)]) {
+                marginForHeader = [self.dataSource marginForHeaderViewInInfiniteListView:self];
+            }
+            //just use default
+            else {
+                marginForHeader = kDefaultHeaderViewBottomMargin;
+            }
+            
+            //calculate the new minimum content height
+            CGFloat newContentSizeHeight = self.noItemsView.frame.size.height + //empty list
+                                           (self.outerPadding.top + self.outerPadding.bottom) + //top and bottom padding
+                                           self.headerView.frame.size.height + //header
+                                           marginForHeader;//header margin
+            
+            
             //stretch the content size, but only if it makes it bigger, never smaller
-            CGFloat newContentSizeHeight = noItemsView.frame.origin.y + noItemsView.frame.size.height + self.outerPadding.bottom;
             if (newContentSizeHeight > self.scrollView.contentSize.height) {
                 self.scrollView.contentSize = CGSizeMake(self.scrollView.contentSize.width, newContentSizeHeight);
             }
@@ -1284,6 +1301,7 @@ innerLoop:
                     
                     //handle the empty view
                     [self _handleNoItemsView];
+                    
                     //we're done
                 }
             }
