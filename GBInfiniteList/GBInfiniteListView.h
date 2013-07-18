@@ -42,6 +42,9 @@ extern NSString * const GBSizeMismatchException;
 //Let's you decide whether you want the list to always bounce vertically, even if the contentSize is less than the view size. You want to leave this on if you have a table refresh control on the scrollView, and you want to turn it off if you plan on rendering the list entirely as a whole on another scrollview which you control.
 @property (assign, nonatomic) BOOL                                  shouldAlwaysScroll;//default: YES
 
+//A mode where it doesn't manage scrolling or view recycling or any of that, and instead draws the entire dataset (until the dataSource returns NO for canLoadMoreItems)
+@property (assign, nonatomic) BOOL                                  staticMode;//default: NO
+
 #pragma mark - Designated initialiser
 
 //Designated initialiser. If the frame changes, the actual list(which is a subview of this object) is just centered. You have to call reset to be given the chance to supply new paddings, column count, etc.

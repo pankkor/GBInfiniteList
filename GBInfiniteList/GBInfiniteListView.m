@@ -66,6 +66,7 @@ static UIEdgeInsets const kPaddingForDefaultSpinner =                           
 static NSUInteger const kDefaultRecyclableViewsPoolSize =                               28;
 
 static BOOL const kDefaultForShouldAlwaysScroll =                                       YES;
+static BOOL const kDefaultForStaticMode =                                               NO;
 
 static NSUInteger const GBColumnIndexUndefined =                                        NSUIntegerMax;
 static GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesUndefined =   {GBColumnIndexUndefined, GBColumnIndexUndefined};
@@ -153,6 +154,12 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 @implementation GBInfiniteListView
 
 #pragma mark - Custom accessors: side effects
+
+-(void)setStaticMode:(BOOL)staticMode {
+    _staticMode = staticMode;
+    
+    [self _syncHeight];
+}
 
 -(CGFloat)totalHeight {
     //it's safe to just return the contentSize, and ignore the insets etc. because we handle the header internally and all content is always just drawn straight into the scrollview
@@ -514,8 +521,9 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Private API: Memory
 
 -(void)_initialisationRoutine {
-    //default properties
+    //default properties (which should persist between resets)
     self.shouldAlwaysScroll = kDefaultForShouldAlwaysScroll;
+    self.staticMode = kDefaultForStaticMode;
     
     //Set state
     self.isInitialised = YES;
@@ -528,7 +536,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     self.gestureRecognizers = @[self.tapGestureRecognizer];
     
     self.scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
-    self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
+    self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin;
     self.scrollView.opaque = NO;
     self.scrollView.backgroundColor = [UIColor clearColor];
     self.scrollView.delegate = self;
@@ -539,8 +547,6 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     self.hasRequestedMoreItems = NO;
     self.lastScrollViewPosition = 0;
     self.maxReusableViewsPoolSize = kDefaultRecyclableViewsPoolSize;
-    
-    self.scrollView.backgroundColor = [[UIColor blueColor] colorWithAlphaComponent:0.3];//foo debug kill
     
     //add the actual scrollview to the screen
     [self addSubview:self.scrollView];
@@ -561,7 +567,6 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)_initialiseColumnCountDependentDataStructures {
-    l(@"initialise column");
     //last recycled items identifiers
     self.lastRecycledItemsIdentifiers = malloc(sizeof(NSInteger) * self.numberOfColumns);
     
@@ -754,6 +759,9 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
             marginForHeader = kDefaultHeaderViewBottomMargin;
         }
         
+        //set autosizing and all that so it stays put
+        headerView.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin;
+        
         //resize width
         CGRect newFrame;
         if (isHeaderViewInsidePadding) {
@@ -856,9 +864,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
             
             
             //stretch the content size, but only if it makes it bigger, never smaller
-            if (newContentSizeHeight > self.scrollView.contentSize.height) {
-                self.scrollView.contentSize = CGSizeMake(self.scrollView.contentSize.width, newContentSizeHeight);
-            }
+            [self _handleContentAndViewHeightForRequiredMinimumContentHeight:newContentSizeHeight];
         }
         //is the view a view? nil
         else if (noItemsView == nil) {
@@ -1000,12 +1006,42 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     
     //resize the scrollview, but only to increase size
     CGFloat newContentSizeHeight = newLoadingViewFrame.origin.y + newLoadingViewFrame.size.height + spacingAfterLoadingView;
-    if (newContentSizeHeight > self.scrollView.contentSize.height) {
-        self.scrollView.contentSize = CGSizeMake(self.scrollView.contentSize.width, newContentSizeHeight);
-    }
+    [self _handleContentAndViewHeightForRequiredMinimumContentHeight:newContentSizeHeight];
 }
 
 #pragma mark - Private API: Geometry stuff
+
+-(void)_syncHeight {
+    CGFloat minimumContentHeight = self.scrollView.contentSize.height;
+    [self _handleContentAndViewHeightForRequiredMinimumContentHeight:minimumContentHeight];
+}
+
+-(void)_handleContentAndViewHeightForRequiredMinimumContentHeight:(CGFloat)minContentHeight {
+    //always resize the contentSize
+    if (minContentHeight > self.scrollView.contentSize.height) {
+        self.scrollView.contentSize = CGSizeMake(self.scrollView.contentSize.width, minContentHeight);
+    }
+    
+    //if the table is static, resize own frame and scrollView frame as well
+    if (self.staticMode) {
+        CGFloat currentContentHeight = self.scrollView.contentSize.height;
+        
+        //change scrollview contentSize
+        //noop, already done above
+        
+        //change the scrollview height
+        self.scrollView.frame = CGRectMake(self.scrollView.frame.origin.x,
+                                           self.scrollView.frame.origin.y,
+                                           self.scrollView.frame.size.width,
+                                           currentContentHeight);
+        
+        //change own height
+        self.frame = CGRectMake(self.frame.origin.x,
+                                self.frame.origin.y,
+                                self.frame.size.width,
+                                currentContentHeight);
+    }
+}
 
 -(void)_requestAndPrepareGeometryStuff {
     //required
@@ -1288,7 +1324,7 @@ innerLoop:
         }
         //ask if there is another item currently available? NO
         else {
-            //check to see if it has already requested mroe items? NO
+            //check to see if it has already requested more items? NO
             if (!self.hasRequestedMoreItems) {
                 //ask if it can load more items? YES
                 if ([self.dataSource canLoadMoreItemsInInfiniteListView:self]) {
@@ -1465,9 +1501,7 @@ innerLoop:
     
     //stretch the content size, but only if it makes it bigger, never smaller
     CGFloat newContentSizeHeight = itemGeometry.origin + itemGeometry.height + self.outerPadding.bottom;
-    if (newContentSizeHeight > self.scrollView.contentSize.height) {
-        self.scrollView.contentSize = CGSizeMake(self.scrollView.contentSize.width, newContentSizeHeight);
-    }
+    [self _handleContentAndViewHeightForRequiredMinimumContentHeight:newContentSizeHeight];
     
     //send the delegate an infiniteListView:view:correspondingToItemDidComeOnScreen: message
     if ([self.delegate respondsToSelector:@selector(infiniteListView:view:correspondingToItemDidComeOnScreen:)]) {
