@@ -297,33 +297,6 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     [self _manageDataDanceState];
 }
 
--(void)didFinishLoadingMoreItems {
-    //check that it was expecting this message? YES
-    if (self.hasRequestedMoreItems) {
-        //remember that you're no longer expecting to receive the moreItemsAvailable: message
-        self.hasRequestedMoreItems = NO;
-        
-        //hide loading view if there was one
-        [self.loadingView removeFromSuperview];
-        self.loadingView = nil;
-        
-        //send delegate the infiniteListViewDidFinishLoadingMoreItems: message
-        if ([self.delegate respondsToSelector:@selector(infiniteListViewDidFinishLoadingMoreItems:)]) {
-            [self.delegate infiniteListViewDidFinishLoadingMoreItems:self];
-        }
-        
-        //restart our loop
-        [self _iterateWithHint:GBInfiniteListDirectionMovedHintDown recyclerEnabled:NO];
-        
-        [self _handleNoItemsView];
-    }
-    //check that it was expecting this message? NO
-    else {
-        //raise GBUnexpectedMessageException and remind to only call this once and only in response to startLoadingMoreItemsInInfiniteListView: message
-        @throw [NSException exceptionWithName:GBUnexpectedMessageException reason:@"The infiniteListView was not expecting more data. Only send this message after the list asks you for more data, and only once!" userInfo:nil];
-    }
-}
-
 -(UIView *)dequeueReusableViewWithIdentifier:(NSString *)reuseIdentifier {
     NSMutableArray *pool;
     //check if we have a pool for that? YES
@@ -365,6 +338,46 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
         
         //return it
         return newView;
+    }
+}
+
+-(void)didFinishLoadingMoreItems {
+    [self _didCompleteLoadingWithCustomLogic:^{
+        //send delegate the infiniteListViewDidFinishLoadingMoreItems: message
+        if ([self.delegate respondsToSelector:@selector(infiniteListViewDidFinishLoadingMoreItems:)]) {
+            [self.delegate infiniteListViewDidFinishLoadingMoreItems:self];
+        }
+        
+        //restart our loop
+        [self _iterateWithHint:GBInfiniteListDirectionMovedHintDown recyclerEnabled:NO];
+    }];
+}
+
+-(void)didFailLoadingMoreItems {
+    [self _didCompleteLoadingWithCustomLogic:nil];
+}
+
+#pragma mark - Private API: Data dance
+
+-(void)_didCompleteLoadingWithCustomLogic:(VoidBlock)code {
+    //check that it was expecting this message? YES
+    if (self.hasRequestedMoreItems) {
+        //remember that you're no longer expecting to receive the moreItemsAvailable: message
+        self.hasRequestedMoreItems = NO;
+        
+        //hide loading view if there was one
+        [self.loadingView removeFromSuperview];
+        self.loadingView = nil;
+        
+        //call the code
+        if (code) code();
+        
+        [self _handleNoItemsView];
+    }
+    //check that it was expecting this message? NO
+    else {
+        //raise GBUnexpectedMessageException and remind to only call this once and only in response to startLoadingMoreItemsInInfiniteListView: message
+        @throw [NSException exceptionWithName:GBUnexpectedMessageException reason:@"The infiniteListView was not expecting more data. Only send this message after the list asks you for more data, and only once!" userInfo:nil];
     }
 }
 

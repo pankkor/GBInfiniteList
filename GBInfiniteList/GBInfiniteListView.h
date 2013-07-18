@@ -56,6 +56,9 @@ extern NSString * const GBSizeMismatchException;
 //Let's us know that you've loaded some more items and that we can ask you for them now
 -(void)didFinishLoadingMoreItems;
 
+//Let us know that you failed to load more items so we can stop showing the loading spinner and stop the requesting
+-(void)didFailLoadingMoreItems;
+
 //Lets you recycle views which have gone off screen rather than creating and destroying them all the time. If you use this, make sure to set the view's reuseIdentifier property to something, otherwise they won't get recycled
 -(UIView *)dequeueReusableViewWithIdentifier:(NSString *)reuseIdentifier;
 
