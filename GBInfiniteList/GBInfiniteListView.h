@@ -40,7 +40,7 @@ extern NSString * const GBSizeMismatchException;
 @property (strong, nonatomic, readonly) UIScrollView                *scrollView;
 
 //Let's you decide whether you want the list to always bounce vertically, even if the contentSize is less than the view size. You want to leave this on if you have a table refresh control on the scrollView, and you want to turn it off if you plan on rendering the list entirely as a whole on another scrollview which you control.
-@property (assign, nonatomic) BOOL                                  shouldAlwaysScroll;//defaults to YES
+@property (assign, nonatomic) BOOL                                  shouldAlwaysScroll;//default: YES
 
 #pragma mark - Designated initialiser
 
