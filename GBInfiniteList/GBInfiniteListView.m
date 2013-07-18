@@ -515,7 +515,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     self.gestureRecognizers = @[self.tapGestureRecognizer];
     
     self.scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
-    self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+    self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
     self.scrollView.opaque = NO;
     self.scrollView.backgroundColor = [UIColor clearColor];
     self.scrollView.delegate = self;
@@ -526,6 +526,8 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     self.hasRequestedMoreItems = NO;
     self.lastScrollViewPosition = 0;
     self.maxReusableViewsPoolSize = kDefaultRecyclableViewsPoolSize;
+    
+    self.scrollView.backgroundColor = [[UIColor blueColor] colorWithAlphaComponent:0.3];//foo debug kill
     
     //add the actual scrollview to the screen
     [self addSubview:self.scrollView];
