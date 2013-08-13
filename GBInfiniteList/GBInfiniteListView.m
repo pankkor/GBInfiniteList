@@ -1507,6 +1507,11 @@ innerLoop:
     if ([self.delegate respondsToSelector:@selector(infiniteListView:view:correspondingToItemDidComeOnScreen:)]) {
         [self.delegate infiniteListView:self view:itemView correspondingToItemDidComeOnScreen:newItemMeta.itemIdentifier];
     }
+    
+    //send the delegate a message that the list of visible items changed
+    if ([self.delegate respondsToSelector:@selector(infiniteListView:listOfVisibleItemsChanged:)]) {
+        [self.delegate infiniteListView:self listOfVisibleItemsChanged:[self.loadedViews allKeys]];
+    }
 }
 
 -(GBInfiniteListGap)_findNextGapWithHint:(GBInfiniteListDirectionMovedHint)directionMovedHint {
