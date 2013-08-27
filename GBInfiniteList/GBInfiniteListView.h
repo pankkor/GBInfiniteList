@@ -24,6 +24,9 @@ extern NSString * const GBSizeMismatchException;
 @property (weak, nonatomic) id<GBInfiniteListViewDataSource>        dataSource;
 @property (weak, nonatomic) id<GBInfiniteListViewDelegate>          delegate;
 
+//When set to YES, the inifinite list automatically starts drawing items as soon as the dataSource is set. Set this to no if you want to manually kick it off
+@property (assign, nonatomic) BOOL                                  shouldAutoStart;//default: YES
+
 //Returns the total height of the content, including the header and footer views
 @property (assign, nonatomic, readonly) CGFloat                     totalHeight;
 
@@ -55,6 +58,9 @@ extern NSString * const GBSizeMismatchException;
 
 //reset (removes everything, cleans up memory and scrolls to top with no animation)
 -(void)reset;
+
+//only use this if you have set shouldAutoStart to NO. If it's YES, then you DON'T need to call this (the infiniteList will start automatically and this will have no effect)
+-(void)start;
 
 //Let's us know that you've loaded some more items and that we can ask you for them now
 -(void)didFinishLoadingMoreItems;

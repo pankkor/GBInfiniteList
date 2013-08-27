@@ -52,6 +52,8 @@ typedef enum {
     GBInfiniteListDirectionMovedHintDown,
 } GBInfiniteListDirectionMovedHint;
 
+static BOOL const kDefaultShouldAutoStart =                                             YES;
+
 static CGFloat const kDefaultVerticalItemMargin =                                       0;
 static CGFloat const kDefaultHorizontalColumnMargin =                                   0;
 static CGFloat const kDefaultLoadTriggerDistance =                                      0;
@@ -99,6 +101,9 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 @property (assign, nonatomic) BOOL                                  isInitialised;
 @property (assign, nonatomic) BOOL                                  isVisible;
 @property (assign, nonatomic) BOOL                                  isDataSourceSet;
+
+//Used so the starting machinery can know when the start method was called
+@property (assign, nonatomic) BOOL                                  didRequestStart;
 
 //This says whether the data dance is on or not
 @property (assign, nonatomic) BOOL                                  isDataDanceActive;
@@ -154,6 +159,12 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 @implementation GBInfiniteListView
 
 #pragma mark - Custom accessors: side effects
+
+-(void)setDidRequestStart:(BOOL)didRequestStart {
+    _didRequestStart = didRequestStart;
+    
+    [self _manageDataDanceState];
+}
 
 -(void)setStaticMode:(BOOL)staticMode {
     _staticMode = staticMode;
@@ -302,6 +313,12 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     
     //start data dance
     [self _manageDataDanceState];
+}
+
+-(void)start {
+    if (!self.isDataDanceActive) {
+        self.didRequestStart = YES;
+    }
 }
 
 -(UIView *)dequeueReusableViewWithIdentifier:(NSString *)reuseIdentifier {
@@ -522,6 +539,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 
 -(void)_initialisationRoutine {
     //default properties (which should persist between resets)
+    self.shouldAutoStart = kDefaultShouldAutoStart;
     self.shouldAlwaysScroll = kDefaultForShouldAlwaysScroll;
     self.staticMode = kDefaultForStaticMode;
     
@@ -679,11 +697,12 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Private API: Data dance state management
 
 -(void)_manageDataDanceState {
-    BOOL allRequiredToStart = (self.isVisible && self.isDataSourceSet && self.isInitialised);
+    BOOL allRequiredToStart = (self.isVisible && self.isDataSourceSet && self.isInitialised && (self.shouldAutoStart || self.didRequestStart));
     BOOL anyRequireToStop = (!self.isDataSourceSet || !self.isInitialised);
     
     //if we have conditions to start & we're not started yet
     if (allRequiredToStart && !self.isDataDanceActive) {
+        _didRequestStart = NO;
         [self _startDataDance];
     }
     
