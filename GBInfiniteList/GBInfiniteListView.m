@@ -1448,6 +1448,9 @@ innerLoop:
     //find the left origin of the column
     CGFloat columnOrigin = self.outerPadding.left + columnIndex * (self.requiredViewWidth + self.horizontalColumnMargin);
     
+    //make sure the autoresizingmask is set appropriately
+    itemView.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleRightMargin;
+    
     //set the subview frame
     itemView.frame = CGRectMake(columnOrigin, itemMeta.geometry.origin, self.requiredViewWidth, itemMeta.geometry.height);
     
@@ -1506,6 +1509,9 @@ innerLoop:
     
     //find the left origin of the column
     CGFloat columnOrigin = self.outerPadding.left + columnIndex * (self.requiredViewWidth + self.horizontalColumnMargin);
+    
+    //make sure the autoresizingmask is set appropriately
+    itemView.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleRightMargin;
     
     //set the subview frame
     itemView.frame = CGRectMake(columnOrigin, itemGeometry.origin, self.requiredViewWidth, itemGeometry.height);
