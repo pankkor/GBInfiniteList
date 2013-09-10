@@ -152,7 +152,7 @@ extern NSString * const GBSizeMismatchException;
 //Lets you add a header view, e.g. a search field at the top
 -(UIView *)headerViewInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 //You can choose whether the header is inside the padding of the list (top, left and right) in which case the items stick immediately to it (that's what the margin is for if you want to space them). Or if you position it outside, the view stretches end-end on left and right and sticks to the top of the view, and then you have the outerpadding of the list items themselves, and then the items. Width is always resized to match, height is never resized. Default is YES, which is inside the list.
--(BOOL)shouldPositionHeaderViewInsideOuterPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView;//foo maybe refactor this to return an enum, might be clearer
+-(BOOL)shouldPositionHeaderViewInsideOuterPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 //Lets you choose a margin for between the headerView and actual list. Is 0 by default on all sides. Collapses with verticalItemMargin, but NOT with outerPadding.top
 -(CGFloat)marginForHeaderViewInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 
