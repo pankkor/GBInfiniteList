@@ -24,6 +24,9 @@ extern NSString * const GBSizeMismatchException;
 @property (weak, nonatomic) id<GBInfiniteListViewDataSource>        dataSource;
 @property (weak, nonatomic) id<GBInfiniteListViewDelegate>          delegate;
 
+//When set to YES, the inifinite list automatically starts drawing items as soon as the dataSource is set. Set this to no if you want to manually kick it off
+@property (assign, nonatomic) BOOL                                  shouldAutoStart;//default: YES
+
 //Returns the total height of the content, including the header and footer views
 @property (assign, nonatomic, readonly) CGFloat                     totalHeight;
 
@@ -39,6 +42,12 @@ extern NSString * const GBSizeMismatchException;
 //Be careful when messing with this! The only thing that's safe to do is add some subviews
 @property (strong, nonatomic, readonly) UIScrollView                *scrollView;
 
+//Let's you decide whether you want the list to always bounce vertically, even if the contentSize is less than the view size. You want to leave this on if you have a table refresh control on the scrollView, and you want to turn it off if you plan on rendering the list entirely as a whole on another scrollview which you control.
+@property (assign, nonatomic) BOOL                                  shouldAlwaysScroll;//default: YES
+
+//A mode where it doesn't manage scrolling or view recycling or any of that, and instead draws the entire dataset (until the dataSource returns NO for canLoadMoreItems)
+@property (assign, nonatomic) BOOL                                  staticMode;//default: NO
+
 #pragma mark - Designated initialiser
 
 //Designated initialiser. If the frame changes, the actual list(which is a subview of this object) is just centered. You have to call reset to be given the chance to supply new paddings, column count, etc.
@@ -50,8 +59,14 @@ extern NSString * const GBSizeMismatchException;
 //reset (removes everything, cleans up memory and scrolls to top with no animation)
 -(void)reset;
 
+//only use this if you have set shouldAutoStart to NO. If it's YES, then you DON'T need to call this (the infiniteList will start automatically and this will have no effect)
+-(void)start;
+
 //Let's us know that you've loaded some more items and that we can ask you for them now
 -(void)didFinishLoadingMoreItems;
+
+//Let us know that you failed to load more items so we can stop showing the loading spinner and stop the requesting
+-(void)didFailLoadingMoreItems;
 
 //Lets you recycle views which have gone off screen rather than creating and destroying them all the time. If you use this, make sure to set the view's reuseIdentifier property to something, otherwise they won't get recycled
 -(UIView *)dequeueReusableViewWithIdentifier:(NSString *)reuseIdentifier;
@@ -137,7 +152,7 @@ extern NSString * const GBSizeMismatchException;
 //Lets you add a header view, e.g. a search field at the top
 -(UIView *)headerViewInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 //You can choose whether the header is inside the padding of the list (top, left and right) in which case the items stick immediately to it (that's what the margin is for if you want to space them). Or if you position it outside, the view stretches end-end on left and right and sticks to the top of the view, and then you have the outerpadding of the list items themselves, and then the items. Width is always resized to match, height is never resized. Default is YES, which is inside the list.
--(BOOL)shouldPositionHeaderViewInsideOuterPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView;//foo maybe refactor this to return an enum, might be clearer
+-(BOOL)shouldPositionHeaderViewInsideOuterPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 //Lets you choose a margin for between the headerView and actual list. Is 0 by default on all sides. Collapses with verticalItemMargin, but NOT with outerPadding.top
 -(CGFloat)marginForHeaderViewInInfiniteListView:(GBInfiniteListView *)infiniteListView;
 

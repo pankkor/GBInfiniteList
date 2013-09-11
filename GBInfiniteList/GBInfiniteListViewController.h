@@ -8,8 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-//foo might need a start method which you call once your view has been sized properly
-
 #import "GBInfiniteListView.h"
 
 @interface GBInfiniteListViewController : UIViewController <GBInfiniteListViewDataSource, GBInfiniteListViewDelegate>

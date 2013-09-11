@@ -52,6 +52,8 @@ typedef enum {
     GBInfiniteListDirectionMovedHintDown,
 } GBInfiniteListDirectionMovedHint;
 
+static BOOL const kDefaultShouldAutoStart =                                             YES;
+
 static CGFloat const kDefaultVerticalItemMargin =                                       0;
 static CGFloat const kDefaultHorizontalColumnMargin =                                   0;
 static CGFloat const kDefaultLoadTriggerDistance =                                      0;
@@ -64,6 +66,9 @@ static CGFloat const kDefaultHeaderViewBottomMargin =                           
 static UIEdgeInsets const kPaddingForDefaultSpinner =                                   (UIEdgeInsets){4, 0, 4, 0};
 
 static NSUInteger const kDefaultRecyclableViewsPoolSize =                               28;
+
+static BOOL const kDefaultForShouldAlwaysScroll =                                       YES;
+static BOOL const kDefaultForStaticMode =                                               NO;
 
 static NSUInteger const GBColumnIndexUndefined =                                        NSUIntegerMax;
 static GBInfiniteListColumnBoundaries const GBInfiniteListColumnBoundariesUndefined =   {GBColumnIndexUndefined, GBColumnIndexUndefined};
@@ -96,6 +101,9 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 @property (assign, nonatomic) BOOL                                  isInitialised;
 @property (assign, nonatomic) BOOL                                  isVisible;
 @property (assign, nonatomic) BOOL                                  isDataSourceSet;
+
+//Used so the starting machinery can know when the start method was called
+@property (assign, nonatomic) BOOL                                  didRequestStart;
 
 //This says whether the data dance is on or not
 @property (assign, nonatomic) BOOL                                  isDataDanceActive;
@@ -152,6 +160,18 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 
 #pragma mark - Custom accessors: side effects
 
+-(void)setDidRequestStart:(BOOL)didRequestStart {
+    _didRequestStart = didRequestStart;
+    
+    [self _manageDataDanceState];
+}
+
+-(void)setStaticMode:(BOOL)staticMode {
+    _staticMode = staticMode;
+    
+    [self _syncHeight];
+}
+
 -(CGFloat)totalHeight {
     //it's safe to just return the contentSize, and ignore the insets etc. because we handle the header internally and all content is always just drawn straight into the scrollview
     return self.scrollView.contentSize.height;
@@ -187,6 +207,12 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     }
     
     _maxReusableViewsPoolSize = maxReusableViewsPoolSize;
+}
+
+-(void)setShouldAlwaysScroll:(BOOL)shouldAlwaysScroll {
+    _shouldAlwaysScroll = shouldAlwaysScroll;
+    
+    self.scrollView.alwaysBounceVertical = shouldAlwaysScroll;
 }
 
 #pragma mark - Custom accessors: Lazy
@@ -276,41 +302,22 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     //make sure they don't sent a draggin message
     self.isUserDragging = NO;
     
-    //scroll to top without animating
-    [self scrollToTopAnimated:NO];
-    
     //recycle all loaded items. just so the old delegate gets his messages
     [self _recyclerLoopWithHint:GBInfiniteListDirectionMovedHintNone forcedRecyclingOfEverything:YES];
     
-    //restart data dance
+    //stop data dance
     [self _stopDataDance];
+    
+    //scroll to top without animating
+    [self scrollToTopAnimated:NO];
+    
+    //start data dance
     [self _manageDataDanceState];
 }
 
--(void)didFinishLoadingMoreItems {
-    //check that it was expecting this message? YES
-    if (self.hasRequestedMoreItems) {
-        //remember that you're no longer expecting to receive the moreItemsAvailable: message
-        self.hasRequestedMoreItems = NO;
-        
-        //hide loading view if there was one
-        [self.loadingView removeFromSuperview];
-        self.loadingView = nil;
-        
-        //send delegate the infiniteListViewDidFinishLoadingMoreItems: message
-        if ([self.delegate respondsToSelector:@selector(infiniteListViewDidFinishLoadingMoreItems:)]) {
-            [self.delegate infiniteListViewDidFinishLoadingMoreItems:self];
-        }
-        
-        //restart our loop
-        [self _iterateWithHint:GBInfiniteListDirectionMovedHintDown recyclerEnabled:NO];
-        
-        [self _handleNoItemsView];
-    }
-    //check that it was expecting this message? NO
-    else {
-        //raise GBUnexpectedMessageException and remind to only call this once and only in response to startLoadingMoreItemsInInfiniteListView: message
-        @throw [NSException exceptionWithName:GBUnexpectedMessageException reason:@"The infiniteListView was not expecting more data. Only send this message after the list asks you for more data, and only once!" userInfo:nil];
+-(void)start {
+    if (!self.isDataDanceActive) {
+        self.didRequestStart = YES;
     }
 }
 
@@ -355,6 +362,46 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
         
         //return it
         return newView;
+    }
+}
+
+-(void)didFinishLoadingMoreItems {
+    [self _didCompleteLoadingWithCustomLogic:^{
+        //send delegate the infiniteListViewDidFinishLoadingMoreItems: message
+        if ([self.delegate respondsToSelector:@selector(infiniteListViewDidFinishLoadingMoreItems:)]) {
+            [self.delegate infiniteListViewDidFinishLoadingMoreItems:self];
+        }
+        
+        //restart our loop
+        [self _iterateWithHint:GBInfiniteListDirectionMovedHintDown recyclerEnabled:NO];
+    }];
+}
+
+-(void)didFailLoadingMoreItems {
+    [self _didCompleteLoadingWithCustomLogic:nil];
+}
+
+#pragma mark - Private API: Data dance
+
+-(void)_didCompleteLoadingWithCustomLogic:(VoidBlock)code {
+    //check that it was expecting this message? YES
+    if (self.hasRequestedMoreItems) {
+        //remember that you're no longer expecting to receive the moreItemsAvailable: message
+        self.hasRequestedMoreItems = NO;
+        
+        //hide loading view if there was one
+        [self.loadingView removeFromSuperview];
+        self.loadingView = nil;
+        
+        //call the code
+        if (code) code();
+        
+        [self _handleNoItemsView];
+    }
+    //check that it was expecting this message? NO
+    else {
+        //raise GBUnexpectedMessageException and remind to only call this once and only in response to startLoadingMoreItemsInInfiniteListView: message
+        @throw [NSException exceptionWithName:GBUnexpectedMessageException reason:@"The infiniteListView was not expecting more data. Only send this message after the list asks you for more data, and only once!" userInfo:nil];
     }
 }
 
@@ -491,6 +538,11 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Private API: Memory
 
 -(void)_initialisationRoutine {
+    //default properties (which should persist between resets)
+    self.shouldAutoStart = kDefaultShouldAutoStart;
+    self.shouldAlwaysScroll = kDefaultForShouldAlwaysScroll;
+    self.staticMode = kDefaultForStaticMode;
+    
     //Set state
     self.isInitialised = YES;
 }
@@ -502,11 +554,13 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     self.gestureRecognizers = @[self.tapGestureRecognizer];
     
     self.scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
-    self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+    self.scrollView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleBottomMargin;
     self.scrollView.opaque = NO;
     self.scrollView.backgroundColor = [UIColor clearColor];
     self.scrollView.delegate = self;
     self.scrollView.scrollEnabled = YES;
+    self.scrollView.showsVerticalScrollIndicator = NO;
+    self.scrollView.alwaysBounceVertical = self.shouldAlwaysScroll;
     self.recycledViewsPool = [NSMutableDictionary new];
     self.loadedViews = [NSMutableDictionary new];
     self.hasRequestedMoreItems = NO;
@@ -644,11 +698,12 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Private API: Data dance state management
 
 -(void)_manageDataDanceState {
-    BOOL allRequiredToStart = (self.isVisible && self.isDataSourceSet && self.isInitialised);
+    BOOL allRequiredToStart = (self.isVisible && self.isDataSourceSet && self.isInitialised && (self.shouldAutoStart || self.didRequestStart));
     BOOL anyRequireToStop = (!self.isDataSourceSet || !self.isInitialised);
     
     //if we have conditions to start & we're not started yet
     if (allRequiredToStart && !self.isDataDanceActive) {
+        _didRequestStart = NO;
         [self _startDataDance];
     }
     
@@ -723,6 +778,9 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
         else {
             marginForHeader = kDefaultHeaderViewBottomMargin;
         }
+        
+        //set autosizing and all that so it stays put
+        headerView.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin;
         
         //resize width
         CGRect newFrame;
@@ -808,11 +866,25 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
             //keep a pointer to the empty view
             self.noItemsView = noItemsView;
             
-            //stretch the content size, but only if it makes it bigger, never smaller
-            CGFloat newContentSizeHeight = noItemsView.frame.origin.y + noItemsView.frame.size.height + self.outerPadding.bottom;
-            if (newContentSizeHeight > self.scrollView.contentSize.height) {
-                self.scrollView.contentSize = CGSizeMake(self.scrollView.contentSize.width, newContentSizeHeight);
+            //get margin for header
+            CGFloat marginForHeader;
+            if ([self.dataSource respondsToSelector:@selector(marginForHeaderViewInInfiniteListView:)]) {
+                marginForHeader = [self.dataSource marginForHeaderViewInInfiniteListView:self];
             }
+            //just use default
+            else {
+                marginForHeader = kDefaultHeaderViewBottomMargin;
+            }
+            
+            //calculate the new minimum content height
+            CGFloat newContentSizeHeight = self.noItemsView.frame.size.height + //empty list
+                                           (self.outerPadding.top + self.outerPadding.bottom) + //top and bottom padding
+                                           self.headerView.frame.size.height + //header
+                                           marginForHeader;//header margin
+            
+            
+            //stretch the content size, but only if it makes it bigger, never smaller
+            [self _handleContentAndViewHeightForRequiredMinimumContentHeight:newContentSizeHeight];
         }
         //is the view a view? nil
         else if (noItemsView == nil) {
@@ -954,12 +1026,42 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     
     //resize the scrollview, but only to increase size
     CGFloat newContentSizeHeight = newLoadingViewFrame.origin.y + newLoadingViewFrame.size.height + spacingAfterLoadingView;
-    if (newContentSizeHeight > self.scrollView.contentSize.height) {
-        self.scrollView.contentSize = CGSizeMake(self.scrollView.contentSize.width, newContentSizeHeight);
-    }
+    [self _handleContentAndViewHeightForRequiredMinimumContentHeight:newContentSizeHeight];
 }
 
 #pragma mark - Private API: Geometry stuff
+
+-(void)_syncHeight {
+    CGFloat minimumContentHeight = self.scrollView.contentSize.height;
+    [self _handleContentAndViewHeightForRequiredMinimumContentHeight:minimumContentHeight];
+}
+
+-(void)_handleContentAndViewHeightForRequiredMinimumContentHeight:(CGFloat)minContentHeight {
+    //always resize the contentSize
+    if (minContentHeight > self.scrollView.contentSize.height) {
+        self.scrollView.contentSize = CGSizeMake(self.scrollView.contentSize.width, minContentHeight);
+    }
+    
+    //if the table is static, resize own frame and scrollView frame as well
+    if (self.staticMode) {
+        CGFloat currentContentHeight = self.scrollView.contentSize.height;
+        
+        //change scrollview contentSize
+        //noop, already done above
+        
+        //change the scrollview height
+        self.scrollView.frame = CGRectMake(self.scrollView.frame.origin.x,
+                                           self.scrollView.frame.origin.y,
+                                           self.scrollView.frame.size.width,
+                                           currentContentHeight);
+        
+        //change own height
+        self.frame = CGRectMake(self.frame.origin.x,
+                                self.frame.origin.y,
+                                self.frame.size.width,
+                                currentContentHeight);
+    }
+}
 
 -(void)_requestAndPrepareGeometryStuff {
     //required
@@ -1242,7 +1344,7 @@ innerLoop:
         }
         //ask if there is another item currently available? NO
         else {
-            //check to see if it has already requested mroe items? NO
+            //check to see if it has already requested more items? NO
             if (!self.hasRequestedMoreItems) {
                 //ask if it can load more items? YES
                 if ([self.dataSource canLoadMoreItemsInInfiniteListView:self]) {
@@ -1266,6 +1368,10 @@ innerLoop:
                     if ([self.delegate respondsToSelector:@selector(infiniteListViewNoMoreItemsAvailable:)]) {
                         [self.delegate infiniteListViewNoMoreItemsAvailable:self];
                     }
+                    
+                    //handle the empty view
+                    [self _handleNoItemsView];
+                    
                     //we're done
                 }
             }
@@ -1342,6 +1448,9 @@ innerLoop:
     //find the left origin of the column
     CGFloat columnOrigin = self.outerPadding.left + columnIndex * (self.requiredViewWidth + self.horizontalColumnMargin);
     
+    //make sure the autoresizingmask is set appropriately
+    itemView.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleRightMargin;
+    
     //set the subview frame
     itemView.frame = CGRectMake(columnOrigin, itemMeta.geometry.origin, self.requiredViewWidth, itemMeta.geometry.height);
     
@@ -1401,6 +1510,9 @@ innerLoop:
     //find the left origin of the column
     CGFloat columnOrigin = self.outerPadding.left + columnIndex * (self.requiredViewWidth + self.horizontalColumnMargin);
     
+    //make sure the autoresizingmask is set appropriately
+    itemView.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleRightMargin;
+    
     //set the subview frame
     itemView.frame = CGRectMake(columnOrigin, itemGeometry.origin, self.requiredViewWidth, itemGeometry.height);
     
@@ -1415,13 +1527,16 @@ innerLoop:
     
     //stretch the content size, but only if it makes it bigger, never smaller
     CGFloat newContentSizeHeight = itemGeometry.origin + itemGeometry.height + self.outerPadding.bottom;
-    if (newContentSizeHeight > self.scrollView.contentSize.height) {
-        self.scrollView.contentSize = CGSizeMake(self.scrollView.contentSize.width, newContentSizeHeight);
-    }
+    [self _handleContentAndViewHeightForRequiredMinimumContentHeight:newContentSizeHeight];
     
     //send the delegate an infiniteListView:view:correspondingToItemDidComeOnScreen: message
     if ([self.delegate respondsToSelector:@selector(infiniteListView:view:correspondingToItemDidComeOnScreen:)]) {
         [self.delegate infiniteListView:self view:itemView correspondingToItemDidComeOnScreen:newItemMeta.itemIdentifier];
+    }
+    
+    //send the delegate a message that the list of visible items changed
+    if ([self.delegate respondsToSelector:@selector(infiniteListView:listOfVisibleItemsChanged:)]) {
+        [self.delegate infiniteListView:self listOfVisibleItemsChanged:[self.loadedViews allKeys]];
     }
 }
 
