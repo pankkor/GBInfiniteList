@@ -299,20 +299,23 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Public API: Data dance
 
 -(void)reset {
-    //make sure they don't sent a draggin message
-    self.isUserDragging = NO;
-    
-    //recycle all loaded items. just so the old delegate gets his messages
-    [self _recyclerLoopWithHint:GBInfiniteListDirectionMovedHintNone forcedRecyclingOfEverything:YES];
-    
-    //stop data dance
-    [self _stopDataDance];
-    
-    //scroll to top without animating
-    [self scrollToTopAnimated:NO];
-    
-    //start data dance
-    [self _manageDataDanceState];
+    //make sure we don't do a double reset
+    if (self.isDataDanceActive) {
+        //make sure they don't sent a draggin message
+        self.isUserDragging = NO;
+        
+        //recycle all loaded items. just so the old delegate gets his messages
+        [self _recyclerLoopWithHint:GBInfiniteListDirectionMovedHintNone forcedRecyclingOfEverything:YES];
+        
+        //stop data dance
+        [self _stopDataDance];
+        
+        //scroll to top without animating
+        [self scrollToTopAnimated:NO];
+        
+        //start data dance
+        [self _manageDataDanceState];
+    }
 }
 
 -(void)start {
@@ -366,19 +369,23 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 }
 
 -(void)didFinishLoadingMoreItems {
-    [self _didCompleteLoadingWithCustomLogic:^{
-        //send delegate the infiniteListViewDidFinishLoadingMoreItems: message
-        if ([self.delegate respondsToSelector:@selector(infiniteListViewDidFinishLoadingMoreItems:)]) {
-            [self.delegate infiniteListViewDidFinishLoadingMoreItems:self];
-        }
-        
-        //restart our loop
-        [self _iterateWithHint:GBInfiniteListDirectionMovedHintDown recyclerEnabled:NO];
-    }];
+    if (self.isDataDanceActive) {
+        [self _didCompleteLoadingWithCustomLogic:^{
+            //send delegate the infiniteListViewDidFinishLoadingMoreItems: message
+            if ([self.delegate respondsToSelector:@selector(infiniteListViewDidFinishLoadingMoreItems:)]) {
+                [self.delegate infiniteListViewDidFinishLoadingMoreItems:self];
+            }
+            
+            //restart our loop
+            [self _iterateWithHint:GBInfiniteListDirectionMovedHintDown recyclerEnabled:NO];
+        }];
+    }
 }
 
 -(void)didFailLoadingMoreItems {
-    [self _didCompleteLoadingWithCustomLogic:nil];
+    if (self.isDataDanceActive) {
+        [self _didCompleteLoadingWithCustomLogic:nil];
+    }
 }
 
 #pragma mark - Private API: Data dance
