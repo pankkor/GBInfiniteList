@@ -1,50 +1,45 @@
 //
-//  GBInfiniteListViewController.m
+//  GBInfiniteListDemoViewController.m
 //  GBInfiniteList
 //
 //  Created by Luka Mirosevic on 30/04/2013.
 //  Copyright (c) 2013 Goonbee. All rights reserved.
 //
 
-#import "GBInfiniteListViewController.h"
+#import "GBInfiniteListDemoViewController.h"
 
-#import "GBToolbox.h"//foo test
-#import "MyView.h"//foo test
+#import "GBToolbox.h"
+#import "MyView.h"
 
 typedef struct {
     NSUInteger identifier;
     CGFloat hue;
     CGFloat width;
     CGFloat height;
-} MyItemProperties;//foo test
+} MyItemProperties;
 
-@interface GBInfiniteListViewController ()
+@interface GBInfiniteListDemoViewController ()
 
 @property (strong, nonatomic, readwrite) GBInfiniteListView *infiniteListView;
 
-@property (strong, nonatomic) NSMutableArray *loadedItems;//foo test
+@property (strong, nonatomic) NSMutableArray *loadedItems;
 
 @end
 
-@implementation GBInfiniteListViewController
+@implementation GBInfiniteListDemoViewController
 
 //creates an infiniteListView for you and sets the frame to match and adds it as a subview to this viewController's view, also sets delegate and dataSource methods.
 
 -(void)reset {
-    l(@"reset in here");
     [self.infiniteListView reset];
 }
 
-//foo testing
 -(void)scrollUp {
     [self.infiniteListView scrollToPosition:0 animated:NO];
 }
 -(void)scrollDown {
     [self.infiniteListView scrollToPosition:10000 animated:NO];
 }
-
-#pragma mark - Memory
-
 
 #pragma mark - Lifecycle
 
@@ -58,44 +53,35 @@ typedef struct {
     self.infiniteListView.dataSource = self;
     
     [self.view addSubview:self.infiniteListView];
-    
-    ExecuteAfter(3, ^{
-//        l(@"go");
-//        [self.infiniteListView reset];//foo this doesnt work
-    });
 }
 
 #pragma mark - GBInfiniteListViewDataSource
 
 -(NSUInteger)numberOfColumnsInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return 3;//foo test different one
+    return 3;
 }
 
 -(CGFloat)loadTriggerDistanceInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return 100;//foo test different one
+    return 100;
 }
 
 -(UIEdgeInsets)outerPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return UIEdgeInsetsMake(10, 10, 10, 10);//foo test other sizes
+    return UIEdgeInsetsMake(10, 10, 10, 10);
 }
 
 -(CGFloat)verticalItemMarginInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return 6;//foo test more
+    return 6;
 }
 
 -(CGFloat)horizontalColumnMarginInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return 10;//foo test more
+    return 10;
 }
 
 -(BOOL)isViewForItem:(NSUInteger)itemIdentifier currentlyAvailableInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-//    l(@"avail?: %d", itemIdentifier);
-    
     return itemIdentifier < self.loadedItems.count;
 }
 
 -(UIView *)viewForItem:(NSUInteger)itemIdentifier inInfiniteListView:(GBInfiniteListView *)infiniteListView {
-//    l(@"load item: %d", itemIdentifier);
-    
     //get a view object...
     MyView *myView = (MyView *)[infiniteListView dequeueReusableViewWithIdentifier:@"SimpleColorBox" elseCreateWithBlock:^UIView *{
         return [[MyView alloc] initWithFrame:CGRectMake(0, 0, 0, 0)];
@@ -112,12 +98,10 @@ typedef struct {
 }
 
 -(BOOL)canLoadMoreItemsInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return YES;//foo try no also
+    return YES;
 }
 
 -(void)startLoadingMoreItemsInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-//    NSLog(@"start loading more from server");
-    
     //pretend to download some stuff off a server and store it locally
     for (int i=0; i<50; i++) {
         NSUInteger newIdentifier = self.loadedItems.count;
@@ -132,31 +116,24 @@ typedef struct {
     }
     
     [self.infiniteListView didFinishLoadingMoreItems];
-    
-//    ExecuteAfter(0, ^{//foo try different delay
-//        NSLog(@"loaded more");
-//        self.numberOfCurrentlyLoadedViews += 10;//foo try different number of loaded items
-//        [self.infiniteListView didFinishLoadingMoreItems];
-//    });
 }
 
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView didRecycleView:(UIView *)view lastUsedByItem:(NSUInteger)itemIdentifier {
-//    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
+    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
 }
 
 -(UIView *)headerViewInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return nil;//foo try sth else too
+    return nil;
 }
 
 -(BOOL)shouldPositionHeaderViewInsideOuterPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return YES;//foo try NO
+    return YES;
 }
 -(CGFloat)marginForHeaderViewInInfiniteListView:(GBInfiniteListView *)infiniteListView {
     return 30;
 }
 
 -(UIView *)noItemsViewInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    //foo try another view
     return nil;
 }
 
@@ -164,17 +141,15 @@ typedef struct {
     return YES;
 }
 -(UIView *)loadingViewInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return nil;//foo try another
+    return nil;
 }
 -(BOOL)shouldPositionLoadingViewInsideOuterPaddingInInfiniteListView:(GBInfiniteListView *)infiniteListView {
-    return YES;//foo try another
+    return YES;
 }
 
 -(CGFloat)marginForLoadingViewInInfiniteListView:(GBInfiniteListView *)infiniteListView {
     return 12;
 }
-
-//#pragma mark - GBInfiniteListViewDelegate
 
 #pragma mark - Testing
 

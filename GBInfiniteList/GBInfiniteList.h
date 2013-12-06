@@ -6,10 +6,4 @@
 //  Copyright (c) 2013 Goonbee. All rights reserved.
 //
 
-#ifndef GBInfiniteList_GBInfiniteList_h
-#define GBInfiniteList_GBInfiniteList_h
-
 #import "GBInfiniteListView.h"
-#import "GBInfiniteListViewController.h"
-
-#endif
