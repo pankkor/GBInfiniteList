@@ -1,5 +1,5 @@
 //
-//  GBInfiniteListViewController.h
+//  GBInfiniteListDemoViewController.h
 //  GBInfiniteList
 //
 //  Created by Luka Mirosevic on 30/04/2013.
@@ -10,14 +10,14 @@
 
 #import "GBInfiniteListView.h"
 
-@interface GBInfiniteListViewController : UIViewController <GBInfiniteListViewDataSource, GBInfiniteListViewDelegate>
+@interface GBInfiniteListDemoViewController : UIViewController <GBInfiniteListViewDataSource, GBInfiniteListViewDelegate>
 
 //this one is created and fills the view upon init
 @property (strong, nonatomic, readonly) GBInfiniteListView *infiniteListView;
 
--(void)reset;//foo test
+-(void)reset;
 
--(void)scrollUp;//foo testing
+-(void)scrollUp;
 -(void)scrollDown;
 
 @end
