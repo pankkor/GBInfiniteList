@@ -109,8 +109,8 @@ typedef struct {
         MyItemProperties newItem;
         newItem.identifier = newIdentifier;
         newItem.width = self.infiniteListView.requiredViewWidth;
-        newItem.height = [self randomIntegerFrom:60 to:160];
-        newItem.hue = [self randomHue];
+        newItem.height = RandomIntegerBetween(60, 260);
+        newItem.hue = RandomHue();
         
         [self.loadedItems addObject:[NSValue valueWithBytes:&newItem objCType:@encode(MyItemProperties)]];
     }
@@ -149,26 +149,6 @@ typedef struct {
 
 -(CGFloat)marginForLoadingViewInInfiniteListView:(GBInfiniteListView *)infiniteListView {
     return 12;
-}
-
-#pragma mark - Testing
-
-//foo add to GBToolbox
--(NSInteger)randomIntegerFrom:(NSInteger)min to:(NSInteger)max {
-    return arc4random() % (max-min) + min;
-}
-
-//foo add to GBToolbox
--(UIColor *)randomColor {
-    CGFloat hue = ( arc4random() % 256 / 256.0 );  //  0.0 to 1.0
-    CGFloat saturation = ( arc4random() % 128 / 256.0 ) + 0.5;  //  0.5 to 1.0, away from white
-    CGFloat brightness = ( arc4random() % 128 / 256.0 ) + 0.5;  //  0.5 to 1.0, away from black
-    return [UIColor colorWithHue:hue saturation:saturation brightness:brightness alpha:1];
-}
-
-//foo add to GBToolbox
--(CGFloat)randomHue {
-    return arc4random() % 256 / 256.0;
 }
 
 @end
