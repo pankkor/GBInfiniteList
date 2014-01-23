@@ -110,7 +110,7 @@ typedef struct {
         newItem.identifier = newIdentifier;
         newItem.width = self.infiniteListView.requiredViewWidth;
         newItem.height = RandomIntegerBetween(60, 260);
-        newItem.hue = RandomHue();
+        newItem.hue = Random();
         
         [self.loadedItems addObject:[NSValue valueWithBytes:&newItem objCType:@encode(MyItemProperties)]];
     }
