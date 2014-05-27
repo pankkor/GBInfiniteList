@@ -986,7 +986,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     //find the longest column
     GBFastArray *columnStack;
     GBInfiniteListColumnBoundaries columnBoundaries;
-    CGFloat runningLongestColumnLength = 0;
+    CGFloat runningLongestColumnLength = self.actualListOrigin;
     CGFloat currentColumnHeight;
     GBInfiniteListItemMeta lastItemInColumn;
     for (int columnIndex=0; columnIndex<self.numberOfColumns; columnIndex++) {
