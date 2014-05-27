@@ -612,6 +612,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 -(void)_cleanup {
     //my data structures
     self.columnStacks = nil;
+	self.numberOfColumns = 0;
     if (self.columnStacksLoadedItemBoundaryIndices != NULL) {
         free(self.columnStacksLoadedItemBoundaryIndices);
         self.columnStacksLoadedItemBoundaryIndices = NULL;
