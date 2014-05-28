@@ -612,7 +612,6 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 -(void)_cleanup {
     //my data structures
     self.columnStacks = nil;
-	self.numberOfColumns = 0;
     if (self.columnStacksLoadedItemBoundaryIndices != NULL) {
         free(self.columnStacksLoadedItemBoundaryIndices);
         self.columnStacksLoadedItemBoundaryIndices = NULL;
@@ -641,64 +640,66 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
 #pragma mark - Private API: Tapping {
 
 -(void)didTap:(UITapGestureRecognizer *)tapGestureRecognizer {
-    if (tapGestureRecognizer.state == UIGestureRecognizerStateEnded) {
-        CGPoint tapLocation = [tapGestureRecognizer locationInView:self.scrollView];
-        CGFloat x = tapLocation.x;
-        CGFloat y = tapLocation.y;
-    
-        //find column in which the tap occurred
-        NSUInteger columnIndex;
-        BOOL insideColumn = false;
-        for (NSUInteger i=0; i<self.numberOfColumns; i++) {
+    if (self.isDataDanceActive) {
+        if (tapGestureRecognizer.state == UIGestureRecognizerStateEnded) {
+            CGPoint tapLocation = [tapGestureRecognizer locationInView:self.scrollView];
+            CGFloat x = tapLocation.x;
+            CGFloat y = tapLocation.y;
             
-            CGFloat columnLeftEdge = self.outerPadding.left + i * (self.requiredViewWidth + self.horizontalColumnMargin);
-            CGFloat columnRightEdge = columnLeftEdge + self.requiredViewWidth;
+            //find column in which the tap occurred
+            NSUInteger columnIndex;
+            BOOL insideColumn = false;
+            for (NSUInteger i=0; i<self.numberOfColumns; i++) {
+                
+                CGFloat columnLeftEdge = self.outerPadding.left + i * (self.requiredViewWidth + self.horizontalColumnMargin);
+                CGFloat columnRightEdge = columnLeftEdge + self.requiredViewWidth;
+                
+                
+                if (x >= columnLeftEdge && x <= columnRightEdge) {
+                    columnIndex = i;
+                    insideColumn = YES;
+                    break;
+                }
+            }
             
+            //bail if it's in no column
+            if (!insideColumn) return;
             
-            if (x >= columnLeftEdge && x <= columnRightEdge) {
-                columnIndex = i;
-                insideColumn = YES;
-                break;
-            }
-        }
-        
-        //bail if it's in no column
-        if (!insideColumn) return;
-        
-        GBFastArray *columnStack = self.columnStacks[columnIndex];
-        NSUInteger firstLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex;
-        NSUInteger lastLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;
-
-        //bail if undefined
-        if (IsGBInfiniteListColumnBoundariesUndefined(self.columnStacksLoadedItemBoundaryIndices[columnIndex])) return;
-        
-        //do binary search for the item that matches, top/low: lastUnloaded, bottom/high: count-1
-        __block GBInfiniteListItemMeta nativeCandidateItem;
-        NSUInteger itemIndex = [columnStack binarySearchForIndexWithLow:firstLoadedIndex high:lastLoadedIndex searchLambda:^GBSearchResult(void *candidateItem) {
-            nativeCandidateItem = *(GBInfiniteListItemMeta *)candidateItem;
-            GBInfiniteListItemGeometry geometry = nativeCandidateItem.geometry;
+            GBFastArray *columnStack = self.columnStacks[columnIndex];
+            NSUInteger firstLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex;
+            NSUInteger lastLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;
             
-            //if visible: bingo
-            if (y >= geometry.origin && y<= (geometry.origin + geometry.height)) {
-                return GBSearchResultMatch;
+            //bail if undefined
+            if (IsGBInfiniteListColumnBoundariesUndefined(self.columnStacksLoadedItemBoundaryIndices[columnIndex])) return;
+            
+            //do binary search for the item that matches, top/low: lastUnloaded, bottom/high: count-1
+            __block GBInfiniteListItemMeta nativeCandidateItem;
+            NSUInteger itemIndex = [columnStack binarySearchForIndexWithLow:firstLoadedIndex high:lastLoadedIndex searchLambda:^GBSearchResult(void *candidateItem) {
+                nativeCandidateItem = *(GBInfiniteListItemMeta *)candidateItem;
+                GBInfiniteListItemGeometry geometry = nativeCandidateItem.geometry;
+                
+                //if visible: bingo
+                if (y >= geometry.origin && y<= (geometry.origin + geometry.height)) {
+                    return GBSearchResultMatch;
+                }
+                //if the item is somewhere before, then we've gone too far
+                else if (y < geometry.origin) {
+                    return GBSearchResultHigh;
+                }
+                //otherwise we're too low
+                else {
+                    return GBSearchResultLow;
+                }
+            }];
+            
+            //bail if we haven't found one
+            if (itemIndex == kGBSearchResultNotFound) return;
+            
+            //we found one, tell delegate
+            UIView *view = self.loadedViews[@(nativeCandidateItem.itemIdentifier)];
+            if ([self.delegate respondsToSelector:@selector(infiniteListView:didTapOnView:correspondingToItem:)]) {
+                [self.delegate infiniteListView:self didTapOnView:view correspondingToItem:nativeCandidateItem.itemIdentifier];
             }
-            //if the item is somewhere before, then we've gone too far
-            else if (y < geometry.origin) {
-                return GBSearchResultHigh;
-            }
-            //otherwise we're too low
-            else {
-                return GBSearchResultLow;
-            }
-        }];
-        
-        //bail if we haven't found one
-        if (itemIndex == kGBSearchResultNotFound) return;
-        
-        //we found one, tell delegate
-        UIView *view = self.loadedViews[@(nativeCandidateItem.itemIdentifier)];
-        if ([self.delegate respondsToSelector:@selector(infiniteListView:didTapOnView:correspondingToItem:)]) {
-            [self.delegate infiniteListView:self didTapOnView:view correspondingToItem:nativeCandidateItem.itemIdentifier];
         }
     }
 }
