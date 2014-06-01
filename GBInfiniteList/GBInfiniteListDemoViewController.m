@@ -92,7 +92,7 @@ typedef struct {
     [[self.loadedItems objectAtIndex:itemIdentifier] getValue:&myItem];
     myView.frame = CGRectMake(0, 0, myItem.width, myItem.height);
     [myView setHue:myItem.hue];
-    [myView setText:[NSString stringWithFormat:@"#%d", myItem.identifier]];
+    [myView setText:[NSString stringWithFormat:@"#%lu", (unsigned long)myItem.identifier]];
     
     return myView;
 }
@@ -119,7 +119,7 @@ typedef struct {
 }
 
 -(void)infiniteListView:(GBInfiniteListView *)infiniteListView didRecycleView:(UIView *)view lastUsedByItem:(NSUInteger)itemIdentifier {
-    NSLog(@"Recycled view with identifier: %d", itemIdentifier);
+    NSLog(@"Recycled view with identifier: %lu", (unsigned long)itemIdentifier);
 }
 
 -(UIView *)headerViewInInfiniteListView:(GBInfiniteListView *)infiniteListView {
