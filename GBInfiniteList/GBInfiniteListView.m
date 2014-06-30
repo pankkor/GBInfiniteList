@@ -1154,7 +1154,8 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
             if (directionMovedHint == GBInfiniteListDirectionMovedHintDown || directionMovedHint == GBInfiniteListDirectionMovedHintNone) {
                 //enumerate downwards, starting from top
                 loopNumber = 1;
-                for (index = firstLoadedIndex; index <= lastLoadedIndex; index++) {
+                //always leave last loaded item
+                for (index = firstLoadedIndex; index < lastLoadedIndex; index++) {
                     goto innerLoop;
                     loop1: continue;
                     exit1: break;
@@ -1165,7 +1166,8 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
             if (directionMovedHint == GBInfiniteListDirectionMovedHintUp || directionMovedHint == GBInfiniteListDirectionMovedHintNone) {
                 //enumerate upwards, starting from bottom
                 loopNumber = 2;
-                for (index = lastLoadedIndex; index >= firstLoadedIndex; index--) {
+                //always leave first loaded item
+                for (index = lastLoadedIndex; index > firstLoadedIndex; index--) {
                     goto innerLoop;                    
                     loop2: continue;
                     exit2: break;
@@ -1195,7 +1197,7 @@ innerLoop:
     //if view is visible
     if (Lines1DOverlap(loadedZoneTop, loadedZoneHeight + self.verticalItemMargin, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {//need to add the verticalItemMargin because items are loaded as soon edge of the previous item is exceeded, so they can be placed offscreen if the scroll distance is less than the margin
         //done with this column, exit this loop
-        if (loopNumber == 1) { goto exit1; } else  { goto exit2; }
+        if (loopNumber == 1) { goto exit1; } else { goto exit2; }
     }
     //if invisible
     else {
@@ -1204,7 +1206,7 @@ innerLoop:
     }
     
     //go back into loop
-    if (loopNumber == 1) { goto loop1; } else  { goto loop2; }
+    if (loopNumber == 1) { goto loop1; } else { goto loop2; }
 
 
     //each column
