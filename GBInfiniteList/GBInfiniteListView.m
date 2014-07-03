@@ -1195,7 +1195,7 @@ innerLoop:
     //if view is visible
     if (Lines1DOverlap(loadedZoneTop, loadedZoneHeight + self.verticalItemMargin, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {//need to add the verticalItemMargin because items are loaded as soon edge of the previous item is exceeded, so they can be placed offscreen if the scroll distance is less than the margin
         //done with this column, exit this loop
-        if (loopNumber == 1) { goto exit1; } else  { goto exit2; }
+        if (loopNumber == 1) { goto exit1; } else { goto exit2; }
     }
     //if invisible
     else {
@@ -1204,7 +1204,7 @@ innerLoop:
     }
     
     //go back into loop
-    if (loopNumber == 1) { goto loop1; } else  { goto loop2; }
+    if (loopNumber == 1) { goto loop1; } else { goto loop2; }
 
 
     //each column
