@@ -1195,7 +1195,7 @@ innerLoop:
     //if view is visible
     if (Lines1DOverlap(loadedZoneTop, loadedZoneHeight + self.verticalItemMargin, nextItemUp.geometry.origin, nextItemUp.geometry.height)) {//need to add the verticalItemMargin because items are loaded as soon edge of the previous item is exceeded, so they can be placed offscreen if the scroll distance is less than the margin
         //done with this column, exit this loop
-        if (loopNumber == 1) { goto exit1; } else  { goto exit2; }
+        if (loopNumber == 1) { goto exit1; } else { goto exit2; }
     }
     //if invisible
     else {
@@ -1204,7 +1204,7 @@ innerLoop:
     }
     
     //go back into loop
-    if (loopNumber == 1) { goto loop1; } else  { goto loop2; }
+    if (loopNumber == 1) { goto loop1; } else { goto loop2; }
 
 
     //each column
@@ -1647,10 +1647,10 @@ innerLoop:
                         return GBSearchResultLow;
                     }
                 }];
-
-                //if it doesnt find one then something went wrong :(
+                
+                // scrolled too far, the column is empty and there is no visible items in the column
                 if (index == kGBSearchResultNotFound) {
-                    l(@"!!!!!!!!!!! fuck! should have found one but it didn't! not found! did u somehow scroll too far?");
+                    break;
                 }
                 
                 //as soon as we find one, do a sequential search upwards to find the first visible one and return that one as the gap (this way when we recurse back he will continue searching properly as if we didn't have to do this tricky binary search)
@@ -1758,6 +1758,11 @@ innerLoop:
                     }
                 }];
                 
+                // scrolled too far, the column is empty and there is no visible items in the column
+                if (index == kGBSearchResultNotFound) {
+                    break;
+                }
+                
                 //as soon as we find one, do a sequential search downwards to find the last visibleone, and return that one as gap (this way when we recurse back he will continue searching properly as if we didn't have to do this tricky binary search)
                 NSUInteger lastIndex = columnStack.count-1;
                 while (index < lastIndex) {
@@ -1780,10 +1785,19 @@ innerLoop:
                     //otherwise go down one more
                     index += 1;
                 }
+                
+                //is item is the last one and is visible
+                nextItemUp = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:index];
+                GBInfiniteListGap oldGap;
+                oldGap.type = GBInfiniteListTypeOfGapExisting;
+                oldGap.columnIdentifier = columnIndex;
+                oldGap.itemIdentifier = nextItemUp.itemIdentifier;
+                oldGap.indexInColumnStack = index;
+                return oldGap;
             }
         }
     }
-    
+
     //if we got here, then theres no gap
     GBInfiniteListGap noGap;
     noGap.type = GBInfiniteListTypeOfGapNone;
