@@ -874,7 +874,7 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
             noItemsView.frame = newFrame;
             
             //configure it to stay there
-            noItemsView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
+            noItemsView.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin;
             
             //draw the view
             [self.scrollView addSubview:noItemsView];
