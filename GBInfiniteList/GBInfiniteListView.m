@@ -857,23 +857,6 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
         
         //is the view a view?
         if ([noItemsView isKindOfClass:[UIView class]]) {
-            //calculate new size to match the width, but keep the height
-            CGRect newFrame = CGRectMake(self.outerPadding.left, self.actualListOrigin, self.scrollView.bounds.size.width, noItemsView.frame.size.height);
-            
-            //apply the new size
-            noItemsView.frame = newFrame;
-            
-            //center it
-            noItemsView.center = CGPointMake(self.center.x, self.center.y + self.noItemsViewVerticalOffset);
-            
-            //configure it to stay there
-            noItemsView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
-            
-            //draw the view
-            [self addSubview:noItemsView];
-            
-            //keep a pointer to the empty view
-            self.noItemsView = noItemsView;
             
             //get margin for header
             CGFloat marginForHeader;
@@ -884,12 +867,24 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
             else {
                 marginForHeader = kDefaultHeaderViewBottomMargin;
             }
+            //calculate new size to match the width, but keep the height
+            CGRect newFrame = CGRectMake(self.outerPadding.left, self.headerView.frame.origin.y + self.headerView.bounds.size.height + marginForHeader, self.scrollView.bounds.size.width - self.outerPadding.left - self.outerPadding.right, noItemsView.frame.size.height);
+            
+            //apply the new size
+            noItemsView.frame = newFrame;
+            
+            //configure it to stay there
+            noItemsView.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin;
+            
+            //draw the view
+            [self.scrollView addSubview:noItemsView];
+            
+            //keep a pointer to the empty view
+            self.noItemsView = noItemsView;
             
             //calculate the new minimum content height
-            CGFloat newContentSizeHeight = self.noItemsView.frame.size.height + //empty list
-                                           (self.outerPadding.top + self.outerPadding.bottom) + //top and bottom padding
-                                           self.headerView.frame.size.height + //header
-                                           marginForHeader;//header margin
+            CGFloat newContentSizeHeight = self.noItemsView.frame.origin.y + self.noItemsView.frame.size.height + //empty list
+            self.outerPadding.bottom; //bottom padding
             
             
             //stretch the content size, but only if it makes it bigger, never smaller
