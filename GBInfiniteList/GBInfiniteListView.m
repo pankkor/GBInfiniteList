@@ -1121,8 +1121,8 @@ static inline BOOL IsGBInfiniteListColumnBoundariesUndefined(GBInfiniteListColum
     CGFloat loadedZoneTop = self.scrollView.contentOffset.y;
     CGFloat loadedZoneHeight = self.scrollView.bounds.size.height + self.loadTriggerDistance;
     GBFastArray *columnStack;
-    NSUInteger firstLoadedIndex;
-    NSUInteger lastLoadedIndex;
+    NSInteger firstLoadedIndex;
+    NSInteger lastLoadedIndex;
     NSInteger index;
     NSInteger columnIndex;
     GBInfiniteListItemMeta nextItemUp;
@@ -1479,37 +1479,48 @@ innerLoop:
     //create meta struct which gets filled in along the way
     GBInfiniteListItemMeta newItemMeta;
     newItemMeta.itemIdentifier = newItemIdentifier;
-
+    
     //find out where to draw the item
     GBFastArray *columnStack = self.columnStacks[columnIndex];
-    GBInfiniteListColumnBoundaries columnBoundaries = self.columnStacksLoadedItemBoundaryIndices[columnIndex];
     GBInfiniteListItemGeometry itemGeometry;
     itemGeometry.height = itemView.frame.size.height;
+    
+    NSUInteger newStackIndex;
     
     //if its the first item, stick it to the top, where the top is origin+outerPadding.top+header+headerMargin
     if (columnStack.isEmpty) {
         itemGeometry.origin = self.actualListOrigin;
+        
+        //set the indices to both be 0
+        self.columnStacksLoadedItemBoundaryIndices[columnIndex] = (GBInfiniteListColumnBoundaries){0,0};
+        newStackIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;
     }
     //otherwise it's lastitem.origin + lastitem.height + verticalItemMargin
     else {
-        GBInfiniteListItemMeta lastItem = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:columnBoundaries.lastLoadedIndex];
+        NSUInteger lastLoadedIndex;
+        //if buindaries are undefined all were unloaded due to not being visible, set indicies to be the latest one in a column stack
+        if (IsGBInfiniteListColumnBoundariesUndefined(self.columnStacksLoadedItemBoundaryIndices[columnIndex])) {
+            newStackIndex = columnStack.count;
+            self.columnStacksLoadedItemBoundaryIndices[columnIndex].firstLoadedIndex = newStackIndex;
+            self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex = newStackIndex;
+            
+            lastLoadedIndex = columnStack.count - 1;
+        } else {
+            lastLoadedIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;
+            // expand the last column boundary by 1
+            self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex += 1;
+            newStackIndex = self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex;
+        }
+        
+        GBInfiniteListItemMeta lastItem = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:lastLoadedIndex];
         itemGeometry.origin = lastItem.geometry.origin + lastItem.geometry.height + self.verticalItemMargin;
     }
     
     //fill in the geometry
     newItemMeta.geometry = itemGeometry;
     
-    //if its the first item, set the indices to both be 0
-    if (columnStack.isEmpty) {
-        self.columnStacksLoadedItemBoundaryIndices[columnIndex] = (GBInfiniteListColumnBoundaries){0,0};
-    }
-    //else expand the last column boundary by 1
-    else {
-        self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex += 1;
-    }
-    
     //and add the meta struct to the columnStack at the correct index
-    [columnStack insertItem:&newItemMeta atIndex:self.columnStacksLoadedItemBoundaryIndices[columnIndex].lastLoadedIndex];
+    [columnStack insertItem:&newItemMeta atIndex:newStackIndex];
     
     //find the left origin of the column
     CGFloat columnOrigin = self.outerPadding.left + columnIndex * (self.requiredViewWidth + self.horizontalColumnMargin);
@@ -1643,8 +1654,20 @@ innerLoop:
                     }
                 }];
                 
-                // scrolled too far, the column is empty and there is no visible items in the column
+                // scrolled too far, there are no visible items in the column
                 if (index == kGBSearchResultNotFound) {
+                    //we return GBInfiniteListTypeOfGapEndOfList gap with index of the smallest columnLenght
+                    //we need to calculate the length of the column first
+                    GBInfiniteListItemMeta lastItemInColumn = *(GBInfiniteListItemMeta *)[columnStack itemAtIndex:columnStack.count-1];
+                    currentColumnLength = lastItemInColumn.geometry.origin + lastItemInColumn.geometry.height;
+                    
+                    //then check if its shorter or not than what we currently think is the shortest
+                    if (currentColumnLength < runningShortestColumnLength) {
+                        runningShortestColumnIndex = columnIndex;
+                        runningShortestColumnLength = currentColumnLength;
+                    }
+                    
+                    //break out of this search to continue to next column
                     break;
                 }
                 
@@ -1669,7 +1692,6 @@ innerLoop:
                     //otherwise go up one more
                     index -= 1;
                 }
-                
             }
         }
             
