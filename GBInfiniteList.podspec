@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = 'GBInfiniteList'
-  s.version      = '1.1.1'
+  s.version      = '1.1.2'
   s.summary      = 'Pinterest style infinite scrolling list controller. Customisable, view pooling, backed by efficient data structures, and a friendly API.'
   s.homepage     = 'https://github.com/lmirosevic/GBInfiniteList'
   s.license      = 'Apache License, Version 2.0'
